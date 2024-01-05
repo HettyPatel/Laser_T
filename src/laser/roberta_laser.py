@@ -1,8 +1,9 @@
 import torch
+import numpy as np
 
 from copy import deepcopy
 from laser.abstract_laser import AbstractLaser
-from laser.matrix_utils import do_low_rank, sorted_mat, prune
+from laser.matrix_utils import do_low_rank, sorted_mat, prune, do_tensor_decomp
 
 
 class RobertaLaser(AbstractLaser):
@@ -54,46 +55,68 @@ class RobertaLaser(AbstractLaser):
             roberta.encoder.layer.1.output.dense.weight
         '''
 
-        num_update = 0
-        for name, param in model.named_parameters():
+        
+        if intervention == 'tensor-decomposition':
+            weights_to_decompose = []
+            selected_layers = [8, 9]
+            for layer in selected_layers:
+                #taking these 4 right now because they are the same size
+                weights_to_decompose.append(model_edit.roberta.encoder.layer[layer].attention.self.query.weight.detach().numpy())
+                weights_to_decompose.append(model_edit.roberta.encoder.layer[layer].attention.self.key.weight.detach().numpy())
+                weights_to_decompose.append(model_edit.roberta.encoder.layer[layer].attention.self.value.weight.detach().numpy())
+                weights_to_decompose.append(model_edit.roberta.encoder.layer[layer].attention.output.dense.weight.detach().numpy())
+            weights_tensor = np.stack(weights_to_decompose)
+            target_rank = 5
+            weights_tensor_low_rank = do_tensor_decomp(weights_tensor, target_rank)
+            for i, layer in enumerate(selected_layers):
+                index = i * 4
+                model_edit.roberta.encoder.layer[layer].attention.self.query.weight = torch.nn.Parameter(weights_tensor_low_rank[index].clone().detach())
+                model_edit.roberta.encoder.layer[layer].attention.self.key.weight = torch.nn.Parameter(weights_tensor_low_rank[index+1].clone().detach())
+                model_edit.roberta.encoder.layer[layer].attention.self.value.weight = torch.nn.Parameter(weights_tensor_low_rank[index+2].clone().detach())
+                model_edit.roberta.encoder.layer[layer].attention.output.dense.weight = torch.nn.Parameter(weights_tensor_low_rank[index+3].clone().detach())
 
-            if lnum != 12 and not name.startswith(f"roberta.encoder.layer.{lnum}"):
-                continue
+        else:
+            num_update = 0
+            for name, param in model.named_parameters():
 
-            # 'k_proj', 'q_proj', 'v_proj', 'out_proj', 'fc_in', 'fc_out', 'None'
-            converted_name = RobertaLaser.convert_name(lname)
-            if lname != "None" and not name.startswith(f"roberta.encoder.layer.{lnum}.{converted_name}"):
-                continue
+                if lnum != 12 and not name.startswith(f"roberta.encoder.layer.{lnum}"):
+                    continue
 
-            if logger is not None:
-                logger.log(f"Updating Layer: roberta.encoder.layer.{lnum}.{converted_name}")
-            print(f"Updating Layer: roberta.encoder.layer.{lnum}.{converted_name}")
+                # 'k_proj', 'q_proj', 'v_proj', 'out_proj', 'fc_in', 'fc_out', 'None'
+                converted_name = RobertaLaser.convert_name(lname)
+                if lname != "None" and not name.startswith(f"roberta.encoder.layer.{lnum}.{converted_name}"):
+                    continue
 
-            # For the sparsity analysis
-            mat_analysis = param.detach().numpy().copy()
-            mat_sort = sorted_mat(mat_analysis)
+                if logger is not None:
+                    logger.log(f"Updating Layer: roberta.encoder.layer.{lnum}.{converted_name}")
+                print(f"Updating Layer: roberta.encoder.layer.{lnum}.{converted_name}")
 
-            mat_analysis = param.detach().numpy().copy()
-            mat_analysis_tensor = deepcopy(param)
+                # For the sparsity analysis
+                mat_analysis = param.detach().numpy().copy()
+                mat_sort = sorted_mat(mat_analysis)
 
-            if intervention == 'dropout':
-                mat_analysis = prune(mat_analysis, mat_sort, rate)  # pruned_mat
-                mat_analysis = torch.from_numpy(mat_analysis)
-
-            elif intervention == 'rank-reduction':
-                # Do rank reduction
-                mat_analysis = do_low_rank(mat_analysis_tensor.type(torch.float32), (10 - rate) * 0.1, niter=20)
-
-            elif intervention == 'zero':
+                mat_analysis = param.detach().numpy().copy()
                 mat_analysis_tensor = deepcopy(param)
-                mat_analysis = 0.0 * mat_analysis_tensor.type(torch.float32)
 
-            else:
-                raise AssertionError(f"Unhandled intervention type {intervention}")
+                if intervention == 'dropout':
+                    mat_analysis = prune(mat_analysis, mat_sort, rate)  # pruned_mat
+                    mat_analysis = torch.from_numpy(mat_analysis)
 
-            RobertaLaser.update_model(model_edit, name, mat_analysis)
-            num_update += 1
+                elif intervention == 'rank-reduction':
+                    # Do rank reduction
+                    mat_analysis = do_low_rank(mat_analysis_tensor.type(torch.float32), (10 - rate) * 0.1, niter=20)
 
-        assert num_update == 1, f"Was supposed to make 1 update to the model but instead made {num_update} updates."
+                elif intervention == 'zero':
+                    mat_analysis_tensor = deepcopy(param)
+                    mat_analysis = 0.0 * mat_analysis_tensor.type(torch.float32)
+                
+                else:
+                    raise AssertionError(f"Unhandled intervention type {intervention}")
+
+
+                RobertaLaser.update_model(model_edit, name, mat_analysis)
+                num_update += 1
+
+            assert num_update == 1, f"Was supposed to make 1 update to the model but instead made {num_update} updates."
 
         return model_edit

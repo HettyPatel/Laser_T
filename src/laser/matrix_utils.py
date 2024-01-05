@@ -1,6 +1,8 @@
 import torch
 import numpy as np
 import matplotlib.pyplot as plt
+import tensorly as tl
+import tensorly.decomposition as tldec 
 
 
 # Helper functions for abs weight pruning
@@ -57,3 +59,9 @@ def do_low_rank(weight, k, debug=False, niter=2):
     weight_approx = torch.nn.Parameter(weight_approx)
 
     return weight_approx
+
+def do_tensor_decomp(tensor, target_rank):
+    factors = tldec.parafac(tensor, rank=target_rank)
+    reconstructed_tensor_np = tl.kruskal_to_tensor(factors)
+    reconstructed_tensor = torch.from_numpy(reconstructed_tensor_np)
+    return reconstructed_tensor

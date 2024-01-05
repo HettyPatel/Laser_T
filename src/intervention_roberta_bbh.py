@@ -318,13 +318,13 @@ if __name__ == '__main__':
     parser.add_argument('--batch_size', type=int, default=256, help='batch size for evaluation')
     parser.add_argument('--k', type=int, default=10, help='top k for evaluation')
     parser.add_argument('--intervention', type=str, default="dropout",
-                        choices=['dropout', 'rank-reduction'], help="what type of intervention to perform")
+                        choices=['dropout', 'rank-reduction', 'tensor-decomposition'], help="what type of intervention to perform")
     parser.add_argument('--lname', type=str, default="None",
                         choices=['k_proj', 'q_proj', 'v_proj', 'out_proj', 'fc_in', 'fc_out', 'None', 'dont'],
                         help="provided which type of parameters to effect")
     parser.add_argument('--lnum', type=int, default=12, help='Layers to edit', choices=list(range(0, 13)))
     parser.add_argument('--home_dir', type=str,
-                        default="./iclr2024/big_bench/",
+                        default="/data/yluo147/laser/Results",
                         help='Directory where the data is')
 
     args = parser.parse_args()
@@ -366,7 +366,8 @@ if __name__ == '__main__':
     best_lname = None
     best_rate = None
 
-    for lnum in [-1, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1]:
+    # for lnum in [-1, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1]:
+    for lnum in [1]:
 
         if lnum == -1:
             lnames = ["dont"]
