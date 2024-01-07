@@ -173,7 +173,7 @@ class RobertaExperiment:
 
         return batch_log_prob_results
 
-    def intervene(self, model, tokenizer, dataset, args, llm_name, choices):
+    def intervene(self, model, tokenizer, dataset, args, llm_name, choices, rank=-1):
 
         dataset_size = len(dataset)
         self.logger.log(f"Starting a new intervention with rate {args.rate}. "
@@ -186,7 +186,8 @@ class RobertaExperiment:
                                                    rate=args.rate,
                                                    intervention=args.intervention,
                                                    logger=self.logger,
-                                                   in_place=True)
+                                                   in_place=True,
+                                                   rank=rank)
 
         model_edit.to(self.device)
         self.logger.log(f"Edited and put model on {model_edit.device} in time {elapsed_from_str(time_edit_start)}")
@@ -324,8 +325,10 @@ if __name__ == '__main__':
                         help="provided which type of parameters to effect")
     parser.add_argument('--lnum', type=int, default=12, help='Layers to edit', choices=list(range(0, 13)))
     parser.add_argument('--home_dir', type=str,
-                        default="/data/yluo147/laser/Results",
+                        default="/data/hpate061/Data/bbh/roberta",
                         help='Directory where the data is')
+    parser.add_argument('--ranks', nargs='+', type=int, default=[5, 10, 20, 50],
+                        help='Ranks to try')
 
     args = parser.parse_args()
 
@@ -362,53 +365,42 @@ if __name__ == '__main__':
     # Step 6: Run intervention
     base_results = None
     best_results = None
-    best_lnum = None
-    best_lname = None
-    best_rate = None
-
-    # for lnum in [-1, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1]:
-    for lnum in [1]:
-
-        if lnum == -1:
-            lnames = ["dont"]
-            rates = [9.9]
-        else:
-            lnames = ["fc_in", "fc_out"]
-            rates = [1.0, 2.0, 4.0, 6.0, 8.0, 9.0, 9.5, 9.9, 9.95]
-
-        for lname in lnames:
-            for rate in reversed(rates):
-
-                args.lnum = lnum
-                args.lname = lname
-                args.rate = rate
-                model = deepcopy(base_model)
-                predictions = experiment.intervene(model=model,
-                                                   tokenizer=tokenizer,
-                                                   dataset=dataset,
-                                                   args=args,
-                                                   llm_name=llm_name,
-                                                   choices=choices)
-
-                results = experiment.validate(predictions, split=0.2)
-
-                if lname == "dont":
-                    base_results = results
-                    logger.log(f"Base Roberta => {results.to_str()}")
-                else:
-                    logger.log(f"Roberta => Layer number: {lnum}, Layer name {lname}, Rate {rate} => "
-                               f"{results.to_str()}")
-                    if best_results is None or \
-                            (results.val_acc > best_results.val_acc) or \
-                            (results.val_acc == best_results.val_acc and results.val_logloss < best_results.val_logloss):
-                        best_results = results
-                        best_lnum = lnum
-                        best_lname = lname
-                        best_rate = rate
-
-                    logger.log(f"Base model results {base_results.to_str()}. "
-                               f"Best results {best_results.to_str()} at "
-                               f"layer: {best_lnum}, lname: {best_lnum}, rate: {best_rate}")
-                    logger.log("=============")
-
-    logger.log("Experimented Completed.")
+    best_rank = None
+    
+    # Getting the base results
+    
+    #changing the args.lname so the intervention does not get run
+    args.lname = 'dont'
+    model = deepcopy(base_model)
+    predictions = experiment.intervene(model=model,
+                                        tokenizer=tokenizer,
+                                        dataset=dataset,
+                                        args=args,
+                                        llm_name=llm_name,
+                                        choices=choices)
+    
+    base_results = experiment.validate(predictions)
+    logger.log(f"Base results {base_results.to_str()}")
+    
+    # Running the intervention on provided ranks
+    
+    for rank in args.ranks:
+        predictions = experiment.intervene(model=model,
+                                           tokenizer=tokenizer,
+                                             dataset=dataset,
+                                                args=args,
+                                                llm_name=llm_name,
+                                                choices=choices,
+                                                rank=rank)
+        results = experiment.validate(predictions)
+        logger.log(f"Results for rank {rank} {results.to_str()}")
+        if best_results is None or results.test_acc > best_results.test_acc:
+            best_results = results
+            best_rank = rank
+            
+    logger.log(f"Best results for rank {best_rank} {best_results.to_str()}")
+    
+                                           
+        
+        
+        

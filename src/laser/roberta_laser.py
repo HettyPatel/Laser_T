@@ -34,7 +34,7 @@ class RobertaLaser(AbstractLaser):
         return converted_name
 
     @staticmethod
-    def get_edited_model(model, lname, lnum, rate, intervention="rank-reduction", logger=None, in_place=True):
+    def get_edited_model(model, lname, lnum, rate, rank, intervention="rank-reduction", logger=None, in_place=True, ):
 
         if in_place:
             model_edit = model
@@ -66,7 +66,7 @@ class RobertaLaser(AbstractLaser):
                 weights_to_decompose.append(model_edit.roberta.encoder.layer[layer].attention.self.value.weight.detach().numpy())
                 weights_to_decompose.append(model_edit.roberta.encoder.layer[layer].attention.output.dense.weight.detach().numpy())
             weights_tensor = np.stack(weights_to_decompose)
-            target_rank = 5
+            target_rank = rank
             weights_tensor_low_rank = do_tensor_decomp(weights_tensor, target_rank)
             for i, layer in enumerate(selected_layers):
                 index = i * 4
