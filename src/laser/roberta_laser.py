@@ -58,22 +58,23 @@ class RobertaLaser(AbstractLaser):
         
         if intervention == 'tensor-decomposition':
             weights_to_decompose = []
-            selected_layers = [8, 9]
+            selected_layers = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
             for layer in selected_layers:
                 #taking these 4 right now because they are the same size
-                weights_to_decompose.append(model_edit.roberta.encoder.layer[layer].attention.self.query.weight.detach().numpy())
-                weights_to_decompose.append(model_edit.roberta.encoder.layer[layer].attention.self.key.weight.detach().numpy())
-                weights_to_decompose.append(model_edit.roberta.encoder.layer[layer].attention.self.value.weight.detach().numpy())
-                weights_to_decompose.append(model_edit.roberta.encoder.layer[layer].attention.output.dense.weight.detach().numpy())
+                weights_to_decompose.append(model_edit.roberta.encoder.layer[layer].attention.self.query.weight.detach().cpu().numpy())
+                weights_to_decompose.append(model_edit.roberta.encoder.layer[layer].attention.self.key.weight.detach().cpu().numpy())
+                weights_to_decompose.append(model_edit.roberta.encoder.layer[layer].attention.self.value.weight.detach().cpu().numpy())
+                weights_to_decompose.append(model_edit.roberta.encoder.layer[layer].attention.output.dense.weight.detach().cpu().numpy())
             weights_tensor = np.stack(weights_to_decompose)
             target_rank = rank
+            print("target rank: ", target_rank)
             weights_tensor_low_rank = do_tensor_decomp(weights_tensor, target_rank)
             for i, layer in enumerate(selected_layers):
                 index = i * 4
-                model_edit.roberta.encoder.layer[layer].attention.self.query.weight = torch.nn.Parameter(weights_tensor_low_rank[index].clone().detach())
-                model_edit.roberta.encoder.layer[layer].attention.self.key.weight = torch.nn.Parameter(weights_tensor_low_rank[index+1].clone().detach())
-                model_edit.roberta.encoder.layer[layer].attention.self.value.weight = torch.nn.Parameter(weights_tensor_low_rank[index+2].clone().detach())
-                model_edit.roberta.encoder.layer[layer].attention.output.dense.weight = torch.nn.Parameter(weights_tensor_low_rank[index+3].clone().detach())
+                model_edit.roberta.encoder.layer[layer].attention.self.query.weight = torch.nn.Parameter(weights_tensor_low_rank[index].clone().detach().to('cuda'))
+                model_edit.roberta.encoder.layer[layer].attention.self.key.weight = torch.nn.Parameter(weights_tensor_low_rank[index+1].clone().detach().to('cuda'))
+                model_edit.roberta.encoder.layer[layer].attention.self.value.weight = torch.nn.Parameter(weights_tensor_low_rank[index+2].clone().detach().to('cuda'))
+                model_edit.roberta.encoder.layer[layer].attention.output.dense.weight = torch.nn.Parameter(weights_tensor_low_rank[index+3].clone().detach().to('cuda'))
 
         else:
             num_update = 0

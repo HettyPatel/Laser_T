@@ -382,6 +382,8 @@ if __name__ == '__main__':
     base_results = experiment.validate(predictions)
     logger.log(f"Base results {base_results.to_str()}")
     
+    args.lname = 'Placeholder'
+    
     # Running the intervention on provided ranks
     
     for rank in args.ranks:
