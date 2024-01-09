@@ -11,7 +11,7 @@
             "program": "${file}",
             "console": "integratedTerminal",
             "justMyCode": true,
-            "args": ["--split", "epistemic_reasoning", "--intervention", "tensor-decomposition"]
+            "args": ["--split", "epistemic_reasoning", "--intervention", "tensor-decomposition", "--rank", "1", "2", "3", "4", "5"]
         }
     ]
 }

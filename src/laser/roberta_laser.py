@@ -69,12 +69,25 @@ class RobertaLaser(AbstractLaser):
             target_rank = rank
             print("target rank: ", target_rank)
             weights_tensor_low_rank = do_tensor_decomp(weights_tensor, target_rank)
+            
             for i, layer in enumerate(selected_layers):
                 index = i * 4
-                model_edit.roberta.encoder.layer[layer].attention.self.query.weight = torch.nn.Parameter(weights_tensor_low_rank[index].clone().detach().to('cuda'))
-                model_edit.roberta.encoder.layer[layer].attention.self.key.weight = torch.nn.Parameter(weights_tensor_low_rank[index+1].clone().detach().to('cuda'))
-                model_edit.roberta.encoder.layer[layer].attention.self.value.weight = torch.nn.Parameter(weights_tensor_low_rank[index+2].clone().detach().to('cuda'))
-                model_edit.roberta.encoder.layer[layer].attention.output.dense.weight = torch.nn.Parameter(weights_tensor_low_rank[index+3].clone().detach().to('cuda'))
+                layer_names = ["self.query", "self.key", "self.value", "output.dense"]
+
+                for j, layer_name in enumerate(layer_names):
+                    weight_name = f"roberta.encoder.layer.{layer}.attention.{layer_name}.weight"
+                    decomposed_weight = weights_tensor_low_rank[index + j].clone().detach().to('cuda')
+                    decomposed_weight_tensor = torch.nn.Parameter(decomposed_weight)
+                    
+                    # Use the update_model method to update the model weights
+                    RobertaLaser.update_model(model_edit, weight_name, decomposed_weight_tensor)
+
+            # for i, layer in enumerate(selected_layers):
+            #     index = i * 4
+            #     model_edit.roberta.encoder.layer[layer].attention.self.query.weight = torch.nn.Parameter(weights_tensor_low_rank[index].clone().detach().to('cuda'))
+            #     model_edit.roberta.encoder.layer[layer].attention.self.key.weight = torch.nn.Parameter(weights_tensor_low_rank[index+1].clone().detach().to('cuda'))
+            #     model_edit.roberta.encoder.layer[layer].attention.self.value.weight = torch.nn.Parameter(weights_tensor_low_rank[index+2].clone().detach().to('cuda'))
+            #     model_edit.roberta.encoder.layer[layer].attention.output.dense.weight = torch.nn.Parameter(weights_tensor_low_rank[index+3].clone().detach().to('cuda'))
 
         else:
             num_update = 0

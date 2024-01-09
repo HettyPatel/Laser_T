@@ -325,7 +325,8 @@ if __name__ == '__main__':
                         help="provided which type of parameters to effect")
     parser.add_argument('--lnum', type=int, default=12, help='Layers to edit', choices=list(range(0, 13)))
     parser.add_argument('--home_dir', type=str,
-                        default="/data/hpate061/Data/bbh/roberta",
+                        # default="/data/hpate061/Data/bbh/roberta",
+                        default="/data/yluo147/laser/Results",
                         help='Directory where the data is')
     parser.add_argument('--ranks', nargs='+', type=int, default=[5, 10, 20, 50],
                         help='Ranks to try')
