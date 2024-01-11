@@ -59,35 +59,42 @@ class RobertaLaser(AbstractLaser):
         if intervention == 'tensor-decomposition':
             weights_to_decompose = []
             selected_layers = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+            # selected_layers = [7, 8, 9, 10, 11]
+            # layer_names = ["attention.self.query", "attention.self.key", "attention.self.value", "attention.output.dense"]
+            layer_names = ["intermediate.dense", "output.dense"]
             for layer in selected_layers:
-                #taking these 4 right now because they are the same size
-                weights_to_decompose.append(model_edit.roberta.encoder.layer[layer].attention.self.query.weight.detach().cpu().numpy())
-                weights_to_decompose.append(model_edit.roberta.encoder.layer[layer].attention.self.key.weight.detach().cpu().numpy())
-                weights_to_decompose.append(model_edit.roberta.encoder.layer[layer].attention.self.value.weight.detach().cpu().numpy())
-                weights_to_decompose.append(model_edit.roberta.encoder.layer[layer].attention.output.dense.weight.detach().cpu().numpy())
+                for layer_name in layer_names:
+                    weight_name = f"roberta.encoder.layer.{layer}.{layer_name}.weight"
+                    weight_to_decompose = RobertaLaser.get_parameter(model_edit, weight_name).detach().cpu().numpy()
+
+                    if layer_name == "output.dense":
+                        weight_to_decompose = weight_to_decompose.T
+                        
+                    weights_to_decompose.append(weight_to_decompose)
+            
             weights_tensor = np.stack(weights_to_decompose)
             target_rank = rank
             print("target rank: ", target_rank)
-            weights_tensor_low_rank = do_tensor_decomp(weights_tensor, target_rank)
+            weights_tensor_low_rank, reconstructed_tensor_np = do_tensor_decomp(weights_tensor, target_rank)
+
+            # print(weights_tensor.shape)
+            # print(reconstructed_tensor_np.shape)
+            # diff = np.sum(weights_tensor - reconstructed_tensor_np)
+            # print(f'diff: {diff}')
             
             for i, layer in enumerate(selected_layers):
-                index = i * 4
-                layer_names = ["self.query", "self.key", "self.value", "output.dense"]
+                index = i * len(layer_names)
+                # index = i * 2
 
                 for j, layer_name in enumerate(layer_names):
-                    weight_name = f"roberta.encoder.layer.{layer}.attention.{layer_name}.weight"
+                    weight_name = f"roberta.encoder.layer.{layer}.{layer_name}.weight"
                     decomposed_weight = weights_tensor_low_rank[index + j].clone().detach().to('cuda')
+                    if layer_name == "output.dense":
+                        decomposed_weight = decomposed_weight.T
                     decomposed_weight_tensor = torch.nn.Parameter(decomposed_weight)
                     
                     # Use the update_model method to update the model weights
                     RobertaLaser.update_model(model_edit, weight_name, decomposed_weight_tensor)
-
-            # for i, layer in enumerate(selected_layers):
-            #     index = i * 4
-            #     model_edit.roberta.encoder.layer[layer].attention.self.query.weight = torch.nn.Parameter(weights_tensor_low_rank[index].clone().detach().to('cuda'))
-            #     model_edit.roberta.encoder.layer[layer].attention.self.key.weight = torch.nn.Parameter(weights_tensor_low_rank[index+1].clone().detach().to('cuda'))
-            #     model_edit.roberta.encoder.layer[layer].attention.self.value.weight = torch.nn.Parameter(weights_tensor_low_rank[index+2].clone().detach().to('cuda'))
-            #     model_edit.roberta.encoder.layer[layer].attention.output.dense.weight = torch.nn.Parameter(weights_tensor_low_rank[index+3].clone().detach().to('cuda'))
 
         else:
             num_update = 0

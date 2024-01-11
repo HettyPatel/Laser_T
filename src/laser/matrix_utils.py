@@ -64,4 +64,4 @@ def do_tensor_decomp(tensor, target_rank):
     factors = tldec.parafac(tensor, rank=target_rank)
     reconstructed_tensor_np = tl.kruskal_to_tensor(factors)
     reconstructed_tensor = torch.from_numpy(reconstructed_tensor_np)
-    return reconstructed_tensor
+    return reconstructed_tensor, reconstructed_tensor_np
