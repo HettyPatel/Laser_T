@@ -1,9 +1,14 @@
+from logging import config
 import os
+import copy
 import time
+from unittest import result
 import torch
 import pickle
 import argparse
+import wandb
 import numpy as np
+import plotly.graph_objects as go
 from tqdm import tqdm
 from copy import deepcopy
 from transformers import AutoTokenizer
@@ -186,7 +191,7 @@ class RobertaExperiment:
                                                    rate=args.rate,
                                                    intervention=args.intervention,
                                                    logger=self.logger,
-                                                   in_place=True,
+                                                   in_place=False,
                                                    rank=rank)
 
         model_edit.to(self.device)
@@ -308,17 +313,24 @@ class RobertaExperiment:
 
 
 if __name__ == '__main__':
+    wandb_config = {
+        # "ranks": range(1, 1000, 10)
+        "ranks": range(1, 100, 1)
+    }
+    wandb.init(project="TASER_Project", config=wandb_config)
+    
 
     # Step 1: Command line argument
     parser = argparse.ArgumentParser(description='Process Arguments for experiments with Roberta LLM on CounterFact')
 
     parser.add_argument('--st', type=int, default=0, help='0,14 27# samples per instruction')
     parser.add_argument('--rate', type=float, default=1, help='rates for intervention')
-    parser.add_argument('--split', type=str, default="causal_judgement", help='big bench split to run on')
+    # parser.add_argument('--split', type=str, default="epistemic_reasoning", help='big bench split to run on')
+    parser.add_argument('--split', type=str, default="qa_wikidata", help='big bench split to run on')
     parser.add_argument('--dtpts', type=int, default=22000, help='# samples per instruction')
     parser.add_argument('--batch_size', type=int, default=256, help='batch size for evaluation')
     parser.add_argument('--k', type=int, default=10, help='top k for evaluation')
-    parser.add_argument('--intervention', type=str, default="dropout",
+    parser.add_argument('--intervention', type=str, default="tensor-decomposition",
                         choices=['dropout', 'rank-reduction', 'tensor-decomposition'], help="what type of intervention to perform")
     parser.add_argument('--lname', type=str, default="None",
                         choices=['k_proj', 'q_proj', 'v_proj', 'out_proj', 'fc_in', 'fc_out', 'None', 'dont'],
@@ -383,11 +395,22 @@ if __name__ == '__main__':
     base_results = experiment.validate(predictions)
     logger.log(f"Base results {base_results.to_str()}")
     
+    
     args.lname = 'Placeholder'
     
     # Running the intervention on provided ranks
     
-    for rank in args.ranks:
+    # ranks = range(50, 150, 50)
+    ranks = wandb_config['ranks']
+    # for rank in args.ranks:
+    
+    # print(len(ranks))
+    test_accs = []
+    test_loglosses = []
+    validation_accs = []
+    validation_loglosses = []
+    
+    for rank in ranks:
         predictions = experiment.intervene(model=model,
                                            tokenizer=tokenizer,
                                              dataset=dataset,
@@ -396,12 +419,55 @@ if __name__ == '__main__':
                                                 choices=choices,
                                                 rank=rank)
         results = experiment.validate(predictions)
+        test_accs.append(results.test_acc)
+        test_loglosses.append(results.test_logloss)
+        validation_accs.append(results.val_acc)
+        validation_loglosses.append(results.val_logloss)
         logger.log(f"Results for rank {rank} {results.to_str()}")
         if best_results is None or results.test_acc > best_results.test_acc:
             best_results = results
             best_rank = rank
             
     logger.log(f"Best results for rank {best_rank} {best_results.to_str()}")
+    print(test_accs)
+    print(test_loglosses)
+    
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(x=list(ranks), y=test_accs, mode='lines', name='tensor decomposition'))
+    fig.add_trace(go.Scatter(x=list(ranks), y=[base_results.test_acc]*len(ranks), mode='lines', name='base reuslts'))
+    
+    fig.update_layout(title='RoBERTa BigBench WikiQA Test Accuracy vs. Ranks', xaxis_title='Ranks', yaxis_title='Test Accuracy')
+    # fig.show()
+    
+    wandb.log({"RoBERTa BigBench-WikiQA Test Accuracy vs. Ranks": fig})
+    
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(x=list(ranks), y=validation_accs, mode='lines', name='tensor decomposition'))
+    fig.add_trace(go.Scatter(x=list(ranks), y=[base_results.val_acc]*len(ranks), mode='lines', name='base reuslts'))
+    
+    fig.update_layout(title='RoBERTa BigBench WikiQA Validation Accuracy vs. Ranks', xaxis_title='Ranks', yaxis_title='Validation Accuray')
+    # fig.show()
+    
+    wandb.log({"RoBERTa BigBench-WikiQA Validation Accuracy vs. Ranks": fig})
+
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(x=list(ranks), y=test_loglosses, mode='lines', name='tensor decomposition'))
+    fig.add_trace(go.Scatter(x=list(ranks), y=[base_results.test_logloss]*len(ranks), mode='lines', name='base reuslts'))
+    
+    fig.update_layout(title='RoBERTa BigBench WikiQA Test logless vs. Ranks', xaxis_title='Ranks', yaxis_title='Test Logloss')
+    # fig.show()
+    
+    wandb.log({"RoBERTa BigBench-WikiQA Test Logloss vs. Ranks": fig})
+
+    
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(x=list(ranks), y=validation_loglosses, mode='lines', name='tensor decomposition'))
+    fig.add_trace(go.Scatter(x=list(ranks), y=[base_results.val_logloss]*len(ranks), mode='lines', name='base reuslts'))
+    
+    fig.update_layout(title='RoBERTa BigBench WikiQA Validation Logloss vs. Ranks', xaxis_title='Ranks', yaxis_title='Validation Logloss')
+    # fig.show()
+    
+    wandb.log({"RoBERTa BigBench-WikiQA Validation Logloss vs. Ranks": fig})
     
                                            
         

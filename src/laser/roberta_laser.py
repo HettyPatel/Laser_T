@@ -3,7 +3,7 @@ import numpy as np
 
 from copy import deepcopy
 from laser.abstract_laser import AbstractLaser
-from laser.matrix_utils import do_low_rank, sorted_mat, prune, do_tensor_decomp
+from laser.matrix_utils import do_low_rank, do_tensor_decomp_pytorch, sorted_mat, prune, do_tensor_decomp
 
 
 class RobertaLaser(AbstractLaser):
@@ -34,7 +34,7 @@ class RobertaLaser(AbstractLaser):
         return converted_name
 
     @staticmethod
-    def get_edited_model(model, lname, lnum, rate, rank, intervention="rank-reduction", logger=None, in_place=True, ):
+    def get_edited_model(model, lname, lnum, rate, rank, intervention="rank-reduction", logger=None, in_place=False):
 
         if in_place:
             model_edit = model
@@ -58,7 +58,8 @@ class RobertaLaser(AbstractLaser):
         
         if intervention == 'tensor-decomposition':
             weights_to_decompose = []
-            selected_layers = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+            # selected_layers = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+            selected_layers = [11]
             # selected_layers = [7, 8, 9, 10, 11]
             # layer_names = ["attention.self.query", "attention.self.key", "attention.self.value", "attention.output.dense"]
             layer_names = ["intermediate.dense", "output.dense"]
@@ -73,9 +74,10 @@ class RobertaLaser(AbstractLaser):
                     weights_to_decompose.append(weight_to_decompose)
             
             weights_tensor = np.stack(weights_to_decompose)
+            weights_tensor = torch.tensor(weights_tensor)
             target_rank = rank
             print("target rank: ", target_rank)
-            weights_tensor_low_rank, reconstructed_tensor_np = do_tensor_decomp(weights_tensor, target_rank)
+            weights_tensor_low_rank= do_tensor_decomp_pytorch(weights_tensor, target_rank)
 
             # print(weights_tensor.shape)
             # print(reconstructed_tensor_np.shape)

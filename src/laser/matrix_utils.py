@@ -2,7 +2,8 @@ import torch
 import numpy as np
 import matplotlib.pyplot as plt
 import tensorly as tl
-import tensorly.decomposition as tldec 
+import tensorly.decomposition as tldec
+from zmq import device 
 
 
 # Helper functions for abs weight pruning
@@ -61,7 +62,16 @@ def do_low_rank(weight, k, debug=False, niter=2):
     return weight_approx
 
 def do_tensor_decomp(tensor, target_rank):
+    # tl.set_backend('pytorch')
     factors = tldec.parafac(tensor, rank=target_rank)
     reconstructed_tensor_np = tl.kruskal_to_tensor(factors)
     reconstructed_tensor = torch.from_numpy(reconstructed_tensor_np)
     return reconstructed_tensor, reconstructed_tensor_np
+    
+def do_tensor_decomp_pytorch(tensor, target_rank):
+    tl.set_backend('pytorch')
+    tensorly_tensor = tl.tensor(tensor, device='cuda')
+    factors = tldec.parafac(tensorly_tensor, rank=target_rank, init='random')
+    reconstructed_tensor = tl.kruskal_to_tensor(factors)
+    # reconstructed_tensor = torch.from_numpy(reconstructed_tensor_np)
+    return reconstructed_tensor

@@ -277,10 +277,12 @@ if __name__ == '__main__':
     parser.add_argument('--lnum', type=int, default=27, help='Layers to edit', choices=list(range(-1, 28)))
     parser.add_argument('--model_path',
                         type=str,
-                        default="/home/dimisra/llama/Llama-2-7b-hf",
+                        # default="/home/dimisra/llama/Llama-2-7b-hf",
+                        default="/data/hpate061/Models/Llama-2-7b-hf",
                         help="Place where model weights are stored")
     parser.add_argument('--home_dir', type=str,
-                        default="./iclr2024/big_bench/",
+                        # default="./iclr2024/big_bench/",
+                        default="/data/yluo147/laser/Results",
                         help='Directory where the data is')
 
     args = parser.parse_args()

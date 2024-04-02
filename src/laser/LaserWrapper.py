@@ -15,7 +15,7 @@ class LaserWrapper:
         pass
 
     @staticmethod
-    def get_edited_model(model, lname, lnum, rate, rank, intervention="rank-reduction", logger=None, in_place=True):
+    def get_edited_model(model, lname, lnum, rate, rank=1, intervention="rank-reduction", logger=None, in_place=True):
 
         if type(model) == LlamaForCausalLM:
             logger.log("Editing a LlamaForCausalLM Model")
