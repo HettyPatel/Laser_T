@@ -75,3 +75,17 @@ def do_tensor_decomp_pytorch(tensor, target_rank):
     reconstructed_tensor = tl.kruskal_to_tensor(factors)
     # reconstructed_tensor = torch.from_numpy(reconstructed_tensor_np)
     return reconstructed_tensor
+
+def do_tucker_decomp_pytorch(tensor, target_rank):
+    tl.set_backend('pytorch')
+    tensorly_tensor = tl.tensor(tensor, device='cuda')
+    core, factors = tldec.tucker(tensorly_tensor, ranks=target_rank, init='random')
+    reconstructed_tensor = tl.tucker_to_tensor(core, factors)
+    return reconstructed_tensor
+
+def do_tt_decomposition(tensor, target_rank):
+    tl.set_backend('pytorch')
+    tensorly_tensor = tl.tensor(tensor, device='cuda')
+    tt_cores = tldec.tensor_train(tensorly_tensor, rank=target_rank)
+    reconstructed_tensor = tl.tt_to_tensor(tt_cores)
+    return reconstructed_tensor
