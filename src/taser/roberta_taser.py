@@ -18,7 +18,7 @@ class RobertaTaser(AbstractTaser):
         :return: stacked tensor
         """
         stacked_tensor = []
-        if intervention_mode == 1:
+        if intervention_mode == "1":
             for i in range(model.config.num_hidden_layers):
                 stacked_tensor.append(model.roberta.encoder.layer[i].attention.self.query.weight)
                 stacked_tensor.append(model.roberta.encoder.layer[i].attention.self.key.weight)
@@ -26,34 +26,74 @@ class RobertaTaser(AbstractTaser):
                 stacked_tensor.append(model.roberta.encoder.layer[i].attention.output.dense.weight)
                 
                 
-        elif intervention_mode == 2:
+        elif intervention_mode == "2":
+            layer = int(layer)
             stacked_tensor.append(model.roberta.encoder.layer[layer].attention.self.query.weight)
             stacked_tensor.append(model.roberta.encoder.layer[layer].attention.self.key.weight)
             stacked_tensor.append(model.roberta.encoder.layer[layer].attention.self.value.weight)
             stacked_tensor.append(model.roberta.encoder.layer[layer].attention.output.dense.weight)
             
             
-        elif intervention_mode == 3:
-            # early Middl Last
-            # TODO: Implement later
-            pass
-        elif intervention_mode == 4:
+        elif intervention_mode == "3":
+            # early Middl Last 1/3, 1/3. 1/3
+            thirds = model.config.num_hidden_layers // 3
+            if layer == "early":
+                for i in range(thirds):
+                    stacked_tensor.append(model.roberta.encoder.layer[i].attention.self.query.weight)
+                    stacked_tensor.append(model.roberta.encoder.layer[i].attention.self.key.weight)
+                    stacked_tensor.append(model.roberta.encoder.layer[i].attention.self.value.weight)
+                    stacked_tensor.append(model.roberta.encoder.layer[i].attention.output.dense.weight)
+                    
+            elif layer == "middle":
+                for i in range(thirds, 2*thirds):
+                    stacked_tensor.append(model.roberta.encoder.layer[i].attention.self.query.weight)
+                    stacked_tensor.append(model.roberta.encoder.layer[i].attention.self.key.weight)
+                    stacked_tensor.append(model.roberta.encoder.layer[i].attention.self.value.weight)
+                    stacked_tensor.append(model.roberta.encoder.layer[i].attention.output.dense.weight)
+                    
+            elif layer == "last":
+                for i in range(2*thirds, model.config.num_hidden_layers):
+                    stacked_tensor.append(model.roberta.encoder.layer[i].attention.self.query.weight)
+                    stacked_tensor.append(model.roberta.encoder.layer[i].attention.self.key.weight)
+                    stacked_tensor.append(model.roberta.encoder.layer[i].attention.self.value.weight)
+                    stacked_tensor.append(model.roberta.encoder.layer[i].attention.output.dense.weight)
+                    
+            else:
+                raise AssertionError(f"For intervention mode 3, layer should be either early, middle or last. Got {layer} instead.")
+                
+        elif intervention_mode == "4":
             for i in range(model.config.num_hidden_layers):
                 stacked_tensor.append(model.roberta.encoder.layer[i].intermediate.dense.weight.T)
                 stacked_tensor.append(model.roberta.encoder.layer[i].output.dense.weight)
                 
                 
-        elif intervention_mode == 5:
+        elif intervention_mode == "5":
+            layer = int(layer)
             stacked_tensor.append(model.roberta.encoder.layer[layer].intermediate.dense.weight.T)
             stacked_tensor.append(model.roberta.encoder.layer[layer].output.dense.weight)
             
-        elif intervention_mode == 6:
+        elif intervention_mode == "6":
             # fc in out early Middl Last
-            #TODO: Implement Later 
-            '''
-            add functionality to do early middle later layers for the tensor stacking and reconstruct then edit the model
-            '''
-            pass
+            
+            thirds = model.config.num_hidden_layers // 3
+            if layer == "early":
+                for i in range(thirds):
+                    stacked_tensor.append(model.roberta.encoder.layer[i].intermediate.dense.weight.T)
+                    stacked_tensor.append(model.roberta.encoder.layer[i].output.dense.weight)
+                    
+            elif layer == "middle":
+                for i in range(thirds, 2*thirds):
+                    stacked_tensor.append(model.roberta.encoder.layer[i].intermediate.dense.weight.T)
+                    stacked_tensor.append(model.roberta.encoder.layer[i].output.dense.weight)
+                    
+            elif layer == "last":
+                for i in range(2*thirds, model.config.num_hidden_layers):
+                    stacked_tensor.append(model.roberta.encoder.layer[i].intermediate.dense.weight.T)
+                    stacked_tensor.append(model.roberta.encoder.layer[i].output.dense.weight)
+                    
+            else:
+                raise AssertionError(f"For intervention mode 6, layer should be either early, middle or last. Got {layer} instead.")
+            
         
         return torch.stack(stacked_tensor, dim=0)
     
@@ -82,8 +122,32 @@ class RobertaTaser(AbstractTaser):
             model.roberta.encoder.layer[layer].attention.output.dense.weight = torch.nn.Parameter(reconstructed_tensor[3])
             
         elif intervention_mode == 3:
-            # early Middl Last
-            pass
+            # early Middl Last 1/3, 1/3. 1/3
+            thirds = model.config.num_hidden_layers // 3
+            if layer == "early":
+                for i in range(thirds):
+                    model.roberta.encoder.layer[i].attention.self.query.weight = torch.nn.Parameter(reconstructed_tensor[4*i])
+                    model.roberta.encoder.layer[i].attention.self.key.weight = torch.nn.Parameter(reconstructed_tensor[4*i+1])
+                    model.roberta.encoder.layer[i].attention.self.value.weight = torch.nn.Parameter(reconstructed_tensor[4*i+2])
+                    model.roberta.encoder.layer[i].attention.output.dense.weight = torch.nn.Parameter(reconstructed_tensor[4*i+3])
+                    
+            elif layer == "middle":
+                for i in range(thirds, 2*thirds):
+                    model.roberta.encoder.layer[i].attention.self.query.weight = torch.nn.Parameter(reconstructed_tensor[4*i])
+                    model.roberta.encoder.layer[i].attention.self.key.weight = torch.nn.Parameter(reconstructed_tensor[4*i+1])
+                    model.roberta.encoder.layer[i].attention.self.value.weight = torch.nn.Parameter(reconstructed_tensor[4*i+2])
+                    model.roberta.encoder.layer[i].attention.output.dense.weight = torch.nn.Parameter(reconstructed_tensor[4*i+3])
+                    
+            elif layer == "last":
+                for i in range(2*thirds, model.config.num_hidden_layers):
+                    model.roberta.encoder.layer[i].attention.self.query.weight = torch.nn.Parameter(reconstructed_tensor[4*i])
+                    model.roberta.encoder.layer[i].attention.self.key.weight = torch.nn.Parameter(reconstructed_tensor[4*i+1])
+                    model.roberta.encoder.layer[i].attention.self.value.weight = torch.nn.Parameter(reconstructed_tensor[4*i+2])
+                    model.roberta.encoder.layer[i].attention.output.dense.weight = torch.nn.Parameter(reconstructed_tensor[4*i+3])
+                    
+            else:
+                raise AssertionError(f"For intervention mode 3, layer should be either early, middle or last. Got {layer} instead.")
+            
         
         elif intervention_mode == 4:
             # fc in out across model
@@ -103,8 +167,25 @@ class RobertaTaser(AbstractTaser):
             model.roberta.encoder.layer[layer].output.dense.weight = torch.nn.Parameter(reconstructed_tensor[1])
             
         elif intervention_mode == 6:
-            # fc in out early Middl Last
-            pass
+            # fc in out early Middl Lastt
+            thirds = model.config.num_hidden_layers // 3
+            if layer == "early":
+                for i in range(thirds):
+                    model.roberta.encoder.layer[i].intermediate.dense.weight = torch.nn.Parameter(reconstructed_tensor[2*i].T)
+                    model.roberta.encoder.layer[i].output.dense.weight = torch.nn.Parameter(reconstructed_tensor[2*i+1])
+                    
+            elif layer == "middle":
+                for i in range(thirds, 2*thirds):
+                    model.roberta.encoder.layer[i].intermediate.dense.weight = torch.nn.Parameter(reconstructed_tensor[2*i].T)
+                    model.roberta.encoder.layer[i].output.dense.weight = torch.nn.Parameter(reconstructed_tensor[2*i+1])
+                    
+            elif layer == "last":
+                for i in range(2*thirds, model.config.num_hidden_layers):
+                    model.roberta.encoder.layer[i].intermediate.dense.weight = torch.nn.Parameter(reconstructed_tensor[2*i].T)
+                    model.roberta.encoder.layer[i].output.dense.weight = torch.nn.Parameter(reconstructed_tensor[2*i+1])
+                    
+            else:
+                raise AssertionError(f"For intervention mode 6, layer should be either early, middle or last. Got {layer} instead.")
         
         return model
     
