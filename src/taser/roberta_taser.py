@@ -119,11 +119,13 @@ class RobertaTaser(AbstractTaser):
             tensorly_tensor = tl.tensor(tensor, device='cuda')
             factors = parafac(tensorly_tensor, rank=rank, init='random')
             reconstructed_tensor = tl.kruskal_to_tensor(factors)
-            
+        
+        
+        # Need to update to do different ranks for each mode if using tucker: 
         elif decomp_type == 'tucker':
             tensorly_tensor = tl.tensor(tensor, device='cuda')
-            core, factors = tucker(tensorly_tensor, ranks=rank, init='random')
-            reconstructed_tensor = tl.tucker_to_tensor(core, factors)
+            tucker_tensor = tucker(tensorly_tensor, rank=rank, init='random')
+            reconstructed_tensor = tl.tucker_to_tensor(tucker_tensor)
             
         else:
             raise AssertionError(f"Unhandled decomposition type {decomp_type}")
