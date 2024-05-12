@@ -66,20 +66,20 @@ class RobertaTaser(AbstractTaser):
             reconstructed_tensor = RobertaTaser.return_reconstructed_tensor(stacked_tensor, decomposition_type, rank)
             
             for i in range(model.config.num_hidden_layers):
-                model.roberta.encoder.layer[i].attention.self.query.weight = reconstructed_tensor[4*i]
-                model.roberta.encoder.layer[i].attention.self.key.weight = reconstructed_tensor[4*i+1]
-                model.roberta.encoder.layer[i].attention.self.value.weight = reconstructed_tensor[4*i+2]
-                model.roberta.encoder.layer[i].attention.output.dense.weight = reconstructed_tensor[4*i+3]
+                model.roberta.encoder.layer[i].attention.self.query.weight = torch.nn.Parameter(reconstructed_tensor[4*i])
+                model.roberta.encoder.layer[i].attention.self.key.weight = torch.nn.Parameter(reconstructed_tensor[4*i+1])
+                model.roberta.encoder.layer[i].attention.self.value.weight = torch.nn.Parameter(reconstructed_tensor[4*i+2])
+                model.roberta.encoder.layer[i].attention.output.dense.weight = torch.nn.Parameter(reconstructed_tensor[4*i+3])
                 
         elif intervention_mode == 2:
             # QKVO layer at a time
             stacked_tensor = RobertaTaser.get_stacked_tensor(model, intervention_mode, layer)
             reconstructed_tensor = RobertaTaser.return_reconstructed_tensor(stacked_tensor, decomposition_type, rank)
             
-            model.roberta.encoder.layer[layer].attention.self.query.weight = reconstructed_tensor[0]
-            model.roberta.encoder.layer[layer].attention.self.key.weight = reconstructed_tensor[1]
-            model.roberta.encoder.layer[layer].attention.self.value.weight = reconstructed_tensor[2]
-            model.roberta.encoder.layer[layer].attention.output.dense.weight = reconstructed_tensor[3]
+            model.roberta.encoder.layer[layer].attention.self.query.weight = torch.nn.Parameter(reconstructed_tensor[0])
+            model.roberta.encoder.layer[layer].attention.self.key.weight = torch.nn.Parameter(reconstructed_tensor[1])
+            model.roberta.encoder.layer[layer].attention.self.value.weight = torch.nn.Parameter(reconstructed_tensor[2])
+            model.roberta.encoder.layer[layer].attention.output.dense.weight = torch.nn.Parameter(reconstructed_tensor[3])
             
         elif intervention_mode == 3:
             # early Middl Last
@@ -91,16 +91,16 @@ class RobertaTaser(AbstractTaser):
             reconstructed_tensor = RobertaTaser.return_reconstructed_tensor(stacked_tensor, decomposition_type, rank)
             
             for i in range(model.config.num_hidden_layers):
-                model.roberta.encoder.layer[i].intermediate.dense.weight = reconstructed_tensor[2*i].T
-                model.roberta.encoder.layer[i].output.dense.weight = reconstructed_tensor[2*i+1]
+                model.roberta.encoder.layer[i].intermediate.dense.weight = torch.nn.Parameter(reconstructed_tensor[2*i].T)
+                model.roberta.encoder.layer[i].output.dense.weight = torch.nn.Parameter(reconstructed_tensor[2*i+1])
                 
         elif intervention_mode == 5:
             # fc in out layer at a time
             stacked_tensor = RobertaTaser.get_stacked_tensor(model, intervention_mode, layer)
             reconstructed_tensor = RobertaTaser.return_reconstructed_tensor(stacked_tensor, decomposition_type, rank)
             
-            model.roberta.encoder.layer[layer].intermediate.dense.weight = reconstructed_tensor[0].T
-            model.roberta.encoder.layer[layer].output.dense.weight = reconstructed_tensor[1]
+            model.roberta.encoder.layer[layer].intermediate.dense.weight = torch.nn.Parameter(reconstructed_tensor[0].T)
+            model.roberta.encoder.layer[layer].output.dense.weight = torch.nn.Parameter(reconstructed_tensor[1])
             
         elif intervention_mode == 6:
             # fc in out early Middl Last
