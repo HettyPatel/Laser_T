@@ -146,7 +146,7 @@ class GPTJTaser(AbstractTaser):
             stacked_tensor = GPTJTaser.get_stacked_tensor(edited_model, intervention_mode, layer)
             reconstructed_tensor = GPTJTaser.return_reconstructed_tensor(stacked_tensor, decomposition_type, rank)
             
-            edited_model.transformer.h[layer].mlp.fc_in.weight = torch.nn.parameter(reconstructed_tensor[0].T)
+            edited_model.transformer.h[layer].mlp.fc_in.weight = torch.nn.Parameter(reconstructed_tensor[0].T)
             edited_model.transformer.h[layer].mlp.fc_out.weight = torch.nn.Parameter(reconstructed_tensor[1])
             
         elif intervention_mode == 6:
