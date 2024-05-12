@@ -18,7 +18,7 @@ class RobertaTaser(AbstractTaser):
         :return: stacked tensor
         """
         stacked_tensor = []
-        if intervention_mode == "1":
+        if intervention_mode == 1:
             for i in range(model.config.num_hidden_layers):
                 stacked_tensor.append(model.roberta.encoder.layer[i].attention.self.query.weight)
                 stacked_tensor.append(model.roberta.encoder.layer[i].attention.self.key.weight)
@@ -26,7 +26,7 @@ class RobertaTaser(AbstractTaser):
                 stacked_tensor.append(model.roberta.encoder.layer[i].attention.output.dense.weight)
                 
                 
-        elif intervention_mode == "2":
+        elif intervention_mode == 2:
             layer = int(layer)
             stacked_tensor.append(model.roberta.encoder.layer[layer].attention.self.query.weight)
             stacked_tensor.append(model.roberta.encoder.layer[layer].attention.self.key.weight)
@@ -34,7 +34,7 @@ class RobertaTaser(AbstractTaser):
             stacked_tensor.append(model.roberta.encoder.layer[layer].attention.output.dense.weight)
             
             
-        elif intervention_mode == "3":
+        elif intervention_mode == 3:
             # early Middl Last 1/3, 1/3. 1/3
             thirds = model.config.num_hidden_layers // 3
             if layer == "early":
@@ -61,18 +61,18 @@ class RobertaTaser(AbstractTaser):
             else:
                 raise AssertionError(f"For intervention mode 3, layer should be either early, middle or last. Got {layer} instead.")
                 
-        elif intervention_mode == "4":
+        elif intervention_mode == 4:
             for i in range(model.config.num_hidden_layers):
                 stacked_tensor.append(model.roberta.encoder.layer[i].intermediate.dense.weight.T)
                 stacked_tensor.append(model.roberta.encoder.layer[i].output.dense.weight)
                 
                 
-        elif intervention_mode == "5":
+        elif intervention_mode == 5:
             layer = int(layer)
             stacked_tensor.append(model.roberta.encoder.layer[layer].intermediate.dense.weight.T)
             stacked_tensor.append(model.roberta.encoder.layer[layer].output.dense.weight)
             
-        elif intervention_mode == "6":
+        elif intervention_mode == 6:
             # fc in out early Middl Last
             
             thirds = model.config.num_hidden_layers // 3
