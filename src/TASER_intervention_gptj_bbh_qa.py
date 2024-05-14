@@ -73,4 +73,35 @@ if __name__ == '__main__':
     #maybe log a table with model, dataset, intervention_mode, layer, rank, and results ? 
     #can extract figures from the table later as needed
     parser.add_argument('--layer', type=str, help='Layer to intervene', default="1")        
-        
+    
+    
+    
+    
+    args = parser.parse_args()
+    
+    
+    
+    
+    #load model and tokenizer
+    llm_name = "GPTJ"
+    llm_path = "INSERT PATH TO MODEL"
+    tokenizer = AutoTokenizer.from_pretrained(llm_path)
+    model = GPTJForCausalLM.from_pretrained(llm_path,
+                                            revision="float16",
+                                            torch_dtype=torch.float16)
+    
+    # CREATE SAVE DIR AND LOGGER
+    # TODO: Create save dir and logger. 
+    
+    
+    
+    dataset, _ = get_bb_dataset("qa_wikidata")
+    
+    
+    #work in progress
+    predictions = TaserGPTJExperiment.intervene(model=model,
+                                       tokenizer=tokenizer,
+                                       dataset=dataset,
+                                       intervention_mode=args.intervention_mode,
+                                       layer=args.layer,)
+    
