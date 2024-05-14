@@ -129,7 +129,30 @@ class GPTJTaser(AbstractTaser):
             # early Middl Last
             stacked_tensor = GPTJTaser.get_stacked_tensor(edited_model, intervention_mode, layer)
             reconstructed_tensor = GPTJTaser.return_reconstructed_tensor(stacked_tensor, decomposition_type, rank)
-            pass
+            
+            thirds = model.config.num_hidden_layers // 3
+            if layer == "early":
+                for i in range(thirds):
+                    edited_model.transformer.h[i].attn.k_proj.weight = torch.nn.Parameter(reconstructed_tensor[4*i])
+                    edited_model.transformer.h[i].attn.q_proj.weight = torch.nn.Parameter(reconstructed_tensor[4*i+1])
+                    edited_model.transformer.h[i].attn.v_proj.weight = torch.nn.Parameter(reconstructed_tensor[4*i+2])
+                    edited_model.transformer.h[i].attn.out_proj.weight = torch.nn.Parameter(reconstructed_tensor[4*i+3])
+            elif layer == "middle":
+                for i in range(thirds, 2*thirds):
+                    edited_model.transformer.h[i].attn.k_proj.weight = torch.nn.Parameter(reconstructed_tensor[4*i])
+                    edited_model.transformer.h[i].attn.q_proj.weight = torch.nn.Parameter(reconstructed_tensor[4*i+1])
+                    edited_model.transformer.h[i].attn.v_proj.weight = torch.nn.Parameter(reconstructed_tensor[4*i+2])
+                    edited_model.transformer.h[i].attn.out_proj.weight = torch.nn.Parameter(reconstructed_tensor[4*i+3])
+                    
+            elif layer == "last":
+                for i in range(2*thirds, model.config.num_hidden_layers):
+                    edited_model.transformer.h[i].attn.k_proj.weight = torch.nn.Parameter(reconstructed_tensor[4*i])
+                    edited_model.transformer.h[i].attn.q_proj.weight = torch.nn.Parameter(reconstructed_tensor[4*i+1])
+                    edited_model.transformer.h[i].attn.v_proj.weight = torch.nn.Parameter(reconstructed_tensor[4*i+2])
+                    edited_model.transformer.h[i].attn.out_proj.weight = torch.nn.Parameter(reconstructed_tensor[4*i+3])
+                    
+            else:
+                raise AssertionError(f"For intervention mode 3, layer should be early, middle or last got {layer}")
         
         elif intervention_mode == 4:
             #FC-in-out across model
@@ -153,7 +176,26 @@ class GPTJTaser(AbstractTaser):
             # fc in out early Middl Last
             stacked_tensor = GPTJTaser.get_stacked_tensor(edited_model, intervention_mode, layer)
             reconstructed_tensor = GPTJTaser.return_reconstructed_tensor(stacked_tensor, decomposition_type, rank)
-            pass
+            
+            thirds = model.config.num_hidden_layers // 3
+            
+            if layer == "early":
+                for i in range(thirds):
+                    edited_model.transformer.h[i].mlp.fc_in.weight = torch.nn.Parameter(reconstructed_tensor[2*i].T)
+                    edited_model.transformer.h[i].mlp.fc_out.weight = torch.nn.Parameter(reconstructed_tensor[2*i+1])
+                    
+            elif layer == "middle":
+                for i in range(thirds, 2*thirds):
+                    edited_model.transformer.h[i].mlp.fc_in.weight = torch.nn.Parameter(reconstructed_tensor[2*i].T)
+                    edited_model.transformer.h[i].mlp.fc_out.weight = torch.nn.Parameter(reconstructed_tensor[2*i+1])
+                    
+            elif layer == "last":
+                for i in range(2*thirds, model.config.num_hidden_layers):
+                    edited_model.transformer.h[i].mlp.fc_in.weight = torch.nn.Parameter(reconstructed_tensor[2*i].T)
+                    edited_model.transformer.h[i].mlp.fc_out.weight = torch.nn.Parameter(reconstructed_tensor[2*i+1])
+                    
+            else:
+                raise AssertionError(f"For intervention mode 6, layer should be early, middle or last got {layer}")
         
         return edited_model
     

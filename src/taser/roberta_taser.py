@@ -122,6 +122,8 @@ class RobertaTaser(AbstractTaser):
             model.roberta.encoder.layer[layer].attention.output.dense.weight = torch.nn.Parameter(reconstructed_tensor[3])
             
         elif intervention_mode == 3:
+            stacked_tensor = RobertaTaser.get_stacked_tensor(model, intervention_mode, layer)
+            reconstructed_tensor = RobertaTaser.return_reconstructed_tensor(stacked_tensor, decomposition_type, rank)
             # early Middl Last 1/3, 1/3. 1/3
             thirds = model.config.num_hidden_layers // 3
             if layer == "early":
@@ -167,6 +169,8 @@ class RobertaTaser(AbstractTaser):
             model.roberta.encoder.layer[layer].output.dense.weight = torch.nn.Parameter(reconstructed_tensor[1])
             
         elif intervention_mode == 6:
+            stacked_tensor = RobertaTaser.get_stacked_tensor(model, intervention_mode, layer)
+            reconstructed_tensor = RobertaTaser.return_reconstructed_tensor(stacked_tensor, decomposition_type, rank)
             # fc in out early Middl Lastt
             thirds = model.config.num_hidden_layers // 3
             if layer == "early":
