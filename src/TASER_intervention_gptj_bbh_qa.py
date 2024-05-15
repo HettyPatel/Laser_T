@@ -12,7 +12,7 @@ from dataset_utils.bigbench import get_bb_dataset
 from study_utils.log_utils import Logger
 from study_utils.metric_utils import Metrics, DatasetMetrics
 from study_utils.time_utils import elapsed_from_str, Progress
-from study_utils.taser_utils import GPTJTaser
+from src.taser.gptj_taser import GPTJTaser
 
 class Results:
 
@@ -54,15 +54,149 @@ class TaserGPTJExperiment:
             
             self.dataset_metric = DatasetMetrics(logger=logger)
             
-            self.device = "cuda" if torch.cuda.is_available() else "cpu"
+            self.device = "cuda" if torch.cuda.is_available() else "cpu"      
             
+            
+        def intervene(self, model, tokenizer, dataset, intervention_mode, layer):
+            
+            dataset_size = len(dataset)
+            
+            self.logger.log(f"Starting intervention mode {intervention_mode} on layer {layer}")
+            
+            time_edit_start = time.time()
+            model_edit = GPTJTaser.get_edited_model(model=model, layer=layer, intervention_mode=intervention_mode)
+            
+            model_edit.to(self.device)
+            self.logger.log(f"Edited and put modl on device in time {elapsed_from_str(time_edit_start)}")
+            
+            predictions = []
+            
+            self.dataset_metric.reset()
+            self.progress.start()
+            
+            for i in tqdm(range(0, dataset_size)):
+                
+                if (i - 1) % 100 == 0 and i > 1:
+                    #print partial performance and telemetry data
+                    self.dataset_metric.print()
+                    self.progress.print(ex_done=i, ex_left=(dataset_size - i))
+                    
+                prompt = dataset[i][0].strip()
+                answer = dataset[i][1].strip()
+                inputs = tokenizer(prompt, return_tensors="pt").to(self.device)
+                input_and_answer = tokenizer(prompt + " " + answer, return_tensors="pt").to(self.device)
+                
+                with torch.no_grad():
+                    
+                    generate_ids = model_edit.generate(inputs.input_ids,
+                                                        max_new_tokens = 10,
+                                                        min_new_tokens = 1)
+                    
+                    generation = tokenizer.batch_decode(generate_ids,
+                                                        skip_special_tokens=True,
+                                                        clean_up_tokenization_spaces=False)[0]
+                    
+                    
+                    # Compute log probability of qustion + answer
+                    results = model_edit(input_and_answer.input_ids)
+                    
+                    logits = results.logits[0]  # Question + Answeeer length x vocab
+                    
+                    log_prob = torch.nn.functional.log_softmax(logits, dim=1)
+                    
+                    log_prob_results = self.metrics.answer_log_prob(log_prob=log_prob,
+                                                                    question_answer_token_ids=input_and_answer.input_ids,
+                                                                    answer=answer,
+                                                                    llm_tokenizer=tokenizer)
+                    
+                    
+                    # compute 0-1 match, f1, prcision, and recall scor in addition to log-prob of the answer tokens
+                    # corrct_log_prob_results = [all_log_prob_results[answer_ix] for answer_ix in correct_answers]
+                    
+                is_correct = self.metrics.generation_match(generation=generation, answer=answer)
+                f1pr_score = self.metrics.f1pr_scores(generation=generation, answer=answer)
+                
+                self.dataset_metric.accept(is_correct=is_correct, f1pr_score=f1pr_score, log_prob_results=log_prob_results)
+                
+                predictions_ = {
+                    "ix": i,
+                    "question": prompt,
+                    "answer": answer,
+                    "generation" : "N/A",
+                    "correct": is_correct,
+                    "f1pr_score": f1pr_score.f1,
+                    "precision": f1pr_score.precision,
+                    "recall": f1pr_score.recall,
+                    "case_sensitive": self.case_sensitive,
+                    "white-space-strip": self.strip,
+                    "total_logprob": log_prob_results.total_logprob,
+                    "answer_logprob": log_prob_results.answer_logprob,
+                    "answer_length": log_prob_results.answer_len,
+                }
+                predictions.append(predictions_)
+            
+            self.terminate_and_save(predictions)
+            
+            return predictions
+        
+        def terminate_and_save(self, predictions):
+            
+            self.logger.log("Saving results. Final Performance is given below: ")
+            self.dataset_metric.terminate()
+            self.dataset_metric.print()
+            
+            time_start = time.time()
+            
+            # Save predictions
+            save_pred_fname = f"{self.save_dir}/{self.llm_name}-predictions-{self.intervention_mode}.pkl"
+            
+            with open(save_pred_fname, "wb") as f:
+                pickle.dump(predictions, f)
+                
+            save_summary_fname = f"{self.save_dir}/{self.llm_name}-summary-{self.intervention_mode}.txt"
+            
+            results = self.dataset_metric.agg_to_dict()
+            
+            for k, v in args.__dict__.items():
+                results["args/%s" % k] = v
+                
+            with open(save_summary_fname, "wb") as f:
+                pickle.dump(results, f)
+                
+            self.logger.log(f"Time taken to store all results: {elapsed_from_str(time_start)}")
+            
+        @staticmethod
+        def get_acc_log_loss(predictions):
+            acc = np.mean([1.0 if prediction["correct"] else 0.0 for prediction in predictions]) * 100.0
+            log_loss = np.mean([-prediction["answer_logprob"]/float(prediction["answer_length"]) for prediction in predictions])
+            
+            return acc, log_loss
+        
+        @staticmethod
+        def validate(predictions, split=0.2):
+            
+            val_size = int(split * len(predictions))
+            validation_predictions = predictions[:val_size]
+            test_predictions = predictions[val_size:]
+            
+            val_acc, val_logloss = TaserGPTJExperiment.get_acc_log_loss(validation_predictions)
+            test_acc, test_logloss = TaserGPTJExperiment.get_acc_log_loss(test_predictions)
+            
+            return Results(val_acc=val_acc,
+                           val_logloss=val_logloss,
+                           test_acc=test_acc,
+                           test_logloss=test_logloss)
+            
+            
+                    
+                    
+                    
+                        
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="GPTJ LLM Experiment")
     
     # parser arguments
-    # make this a list as well? to pass multiple modes in single run, store results in a table
-    # create plots later? 
     parser.add_argument('--intervention_mode',
                     type=int, help='1. QKVO across Model \n2. QKVO 1 layer at a time \n3. QKVO (Early, Middle, Last)\
                         \n4. FC-in-out across model\n5. FC-in-out 1 layer at a time \n6. FC-in-out (Early, middle, end)',
@@ -74,11 +208,11 @@ if __name__ == '__main__':
     #can extract figures from the table later as needed
     parser.add_argument('--layer', type=str, help='Layer to intervene', default="1")        
     
+    parser.add_argument('--home_dir', type=str, help='Home directory for saving results', default="INSERT HOME DIR")
     
     
     
     args = parser.parse_args()
-    
     
     
     
@@ -93,6 +227,16 @@ if __name__ == '__main__':
     # CREATE SAVE DIR AND LOGGER
     # TODO: Create save dir and logger. 
     
+    home_dir = args.home_dir
+    intervention_mode = args.intervention_mode
+    save_dir = f"{home_dir}/{intervention_mode}/{llm_name}_intervention_results"
+    
+    if not os.path.exists(save_dir):
+        os.makedirs(save_dir)
+        
+    logger = Logger(save_dir=save_dir, fname=f"{llm_name}_experiment.log")
+    
+    experiment = TaserGPTJExperiment(save_dir=save_dir, logger=logger)
     
     
     dataset, _ = get_bb_dataset("qa_wikidata")
@@ -104,4 +248,6 @@ if __name__ == '__main__':
                                        dataset=dataset,
                                        intervention_mode=args.intervention_mode,
                                        layer=args.layer,)
+    
+    
     
