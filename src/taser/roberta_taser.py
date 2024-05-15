@@ -103,7 +103,7 @@ class RobertaTaser(AbstractTaser):
         if intervention_mode == 1:
             # QKVO across model
             stacked_tensor = RobertaTaser.get_stacked_tensor(model, intervention_mode)
-            reconstructed_tensor = RobertaTaser.return_reconstructed_tensor(stacked_tensor, decomposition_type, rank)
+            reconstructed_tensor = RobertaTaser.return_reconstructed_tensor(tensor=stacked_tensor, decomposition_type=decomposition_type, rank=rank)
             
             for i in range(model.config.num_hidden_layers):
                 model.roberta.encoder.layer[i].attention.self.query.weight = torch.nn.Parameter(reconstructed_tensor[4*i])
@@ -114,7 +114,7 @@ class RobertaTaser(AbstractTaser):
         elif intervention_mode == 2:
             # QKVO layer at a time
             stacked_tensor = RobertaTaser.get_stacked_tensor(model, intervention_mode, layer)
-            reconstructed_tensor = RobertaTaser.return_reconstructed_tensor(stacked_tensor, decomposition_type, rank)
+            reconstructed_tensor = RobertaTaser.return_reconstructed_tensor(tensor=stacked_tensor, decomposition_type=decomposition_type, rank=rank)
             
             model.roberta.encoder.layer[layer].attention.self.query.weight = torch.nn.Parameter(reconstructed_tensor[0])
             model.roberta.encoder.layer[layer].attention.self.key.weight = torch.nn.Parameter(reconstructed_tensor[1])
@@ -123,7 +123,7 @@ class RobertaTaser(AbstractTaser):
             
         elif intervention_mode == 3:
             stacked_tensor = RobertaTaser.get_stacked_tensor(model, intervention_mode, layer)
-            reconstructed_tensor = RobertaTaser.return_reconstructed_tensor(stacked_tensor, decomposition_type, rank)
+            reconstructed_tensor = RobertaTaser.return_reconstructed_tensor(tensor=stacked_tensor, decomposition_type=decomposition_type, rank=rank)
             # early Middl Last 1/3, 1/3. 1/3
             thirds = model.config.num_hidden_layers // 3
             if layer == "early":
@@ -154,7 +154,7 @@ class RobertaTaser(AbstractTaser):
         elif intervention_mode == 4:
             # fc in out across model
             stacked_tensor = RobertaTaser.get_stacked_tensor(model, intervention_mode)
-            reconstructed_tensor = RobertaTaser.return_reconstructed_tensor(stacked_tensor, decomposition_type, rank)
+            reconstructed_tensor = RobertaTaser.return_reconstructed_tensor(tensor=stacked_tensor, decomposition_type=decomposition_type, rank=rank)
             
             for i in range(model.config.num_hidden_layers):
                 model.roberta.encoder.layer[i].intermediate.dense.weight = torch.nn.Parameter(reconstructed_tensor[2*i].T)
@@ -163,14 +163,14 @@ class RobertaTaser(AbstractTaser):
         elif intervention_mode == 5:
             # fc in out layer at a time
             stacked_tensor = RobertaTaser.get_stacked_tensor(model, intervention_mode, layer)
-            reconstructed_tensor = RobertaTaser.return_reconstructed_tensor(stacked_tensor, decomposition_type, rank)
+            reconstructed_tensor = RobertaTaser.return_reconstructed_tensor(tensor=stacked_tensor, decomposition_type=decomposition_type, rank=rank)
             
             model.roberta.encoder.layer[layer].intermediate.dense.weight = torch.nn.Parameter(reconstructed_tensor[0].T)
             model.roberta.encoder.layer[layer].output.dense.weight = torch.nn.Parameter(reconstructed_tensor[1])
             
         elif intervention_mode == 6:
             stacked_tensor = RobertaTaser.get_stacked_tensor(model, intervention_mode, layer)
-            reconstructed_tensor = RobertaTaser.return_reconstructed_tensor(stacked_tensor, decomposition_type, rank)
+            reconstructed_tensor = RobertaTaser.return_reconstructed_tensor(tensor=stacked_tensor, decomposition_type=decomposition_type, rank=rank)
             # fc in out early Middl Lastt
             thirds = model.config.num_hidden_layers // 3
             if layer == "early":
@@ -194,25 +194,25 @@ class RobertaTaser(AbstractTaser):
         return model
     
     @staticmethod
-    def return_reconstructed_tensor(tensor, rank, decomp_type):
+    def return_reconstructed_tensor(tensor, rank, decomposition_type='cp'):
         """
         return the reconstructed tensor for the given tensor with given rank and decomp_type.
         """
         tl.set_backend('pytorch')
         
-        if decomp_type == 'cp':
+        if decomposition_type == 'cp':
             tensorly_tensor = tl.tensor(tensor, device='cuda')
             factors = parafac(tensorly_tensor, rank=rank, init='random')
             reconstructed_tensor = tl.kruskal_to_tensor(factors)
         
         
         # Need to update to do different ranks for each mode if using tucker: 
-        elif decomp_type == 'tucker':
+        elif decomposition_type == 'tucker':
             tensorly_tensor = tl.tensor(tensor, device='cuda')
             tucker_tensor = tucker(tensorly_tensor, rank=rank, init='random')
             reconstructed_tensor = tl.tucker_to_tensor(tucker_tensor)
             
         else:
-            raise AssertionError(f"Unhandled decomposition type {decomp_type}")
+            raise AssertionError(f"Unhandled decomposition type {decomposition_type}")
         
         return reconstructed_tensor

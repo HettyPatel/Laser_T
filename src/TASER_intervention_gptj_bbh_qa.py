@@ -12,7 +12,8 @@ from dataset_utils.bigbench import get_bb_dataset
 from study_utils.log_utils import Logger
 from study_utils.metric_utils import Metrics, DatasetMetrics
 from study_utils.time_utils import elapsed_from_str, Progress
-from src.taser.gptj_taser import GPTJTaser
+from taser.gptj_taser import GPTJTaser
+import wandb
 
 class Results:
 
@@ -57,14 +58,14 @@ class TaserGPTJExperiment:
             self.device = "cuda" if torch.cuda.is_available() else "cpu"      
             
             
-        def intervene(self, model, tokenizer, dataset, intervention_mode, layer):
+        def intervene(self, model, tokenizer, dataset, intervention_mode, layer, rank, decomposition_type = "cp"):
             
             dataset_size = len(dataset)
             
             self.logger.log(f"Starting intervention mode {intervention_mode} on layer {layer}")
             
             time_edit_start = time.time()
-            model_edit = GPTJTaser.get_edited_model(model=model, layer=layer, intervention_mode=intervention_mode)
+            model_edit = GPTJTaser.get_edited_model(model=model, intervention_mode=intervention_mode, layer=layer, rank=rank, decomposition_type=decomposition_type)
             
             model_edit.to(self.device)
             self.logger.log(f"Edited and put modl on device in time {elapsed_from_str(time_edit_start)}")
@@ -100,12 +101,12 @@ class TaserGPTJExperiment:
                     # Compute log probability of qustion + answer
                     results = model_edit(input_and_answer.input_ids)
                     
-                    logits = results.logits[0]  # Question + Answeeer length x vocab
+                    logits = results.logits[0]  # Question + Answer length x vocab
                     
                     log_prob = torch.nn.functional.log_softmax(logits, dim=1)
                     
                     log_prob_results = self.metrics.answer_log_prob(log_prob=log_prob,
-                                                                    question_answer_token_ids=input_and_answer.input_ids,
+                                                                    question_answer_token_ids=input_and_answer.input_ids[0],
                                                                     answer=answer,
                                                                     llm_tokenizer=tokenizer)
                     
@@ -129,8 +130,8 @@ class TaserGPTJExperiment:
                     "recall": f1pr_score.recall,
                     "case_sensitive": self.case_sensitive,
                     "white-space-strip": self.strip,
-                    "total_logprob": log_prob_results.total_logprob,
-                    "answer_logprob": log_prob_results.answer_logprob,
+                    "total_logprob": log_prob_results.total_log_prob,
+                    "answer_logprob": log_prob_results.answer_log_prob,
                     "answer_length": log_prob_results.answer_len,
                 }
                 predictions.append(predictions_)
@@ -200,32 +201,46 @@ if __name__ == '__main__':
     parser.add_argument('--intervention_mode',
                     type=int, help='1. QKVO across Model \n2. QKVO 1 layer at a time \n3. QKVO (Early, Middle, Last)\
                         \n4. FC-in-out across model\n5. FC-in-out 1 layer at a time \n6. FC-in-out (Early, middle, end)',
-                        default=1, choices=[1, 2, 3, 4, 5, 6])   
+                        default=1, choices=[1, 2, 3, 4, 5, 6])
     
     
     #should this be a list of strings so we can do all and early middle last all in the same run?
     #maybe log a table with model, dataset, intervention_mode, layer, rank, and results ? 
     #can extract figures from the table later as needed
-    parser.add_argument('--layer', type=str, help='Layer to intervene', default="1")        
-    
-    parser.add_argument('--home_dir', type=str, help='Home directory for saving results', default="INSERT HOME DIR")
-    
-    
+    #list of layers to intervene on    
+    parser.add_argument('--home_dir', type=str, help='Home directory for saving results', default="/home/hpate061/Laser_T/results")
+    parser.add_argument('--decomposition_type', type=str, help='Decomposition type for rank reduction', default="cp", choices=["cp", "tucker"])
     
     args = parser.parse_args()
     
+    # For all layers and early, middle, last
+    layers = range(0,28)
+    layers = [str(layer) for layer in layers]
+    layers.append("early")
+    layers.append("middle")
+    layers.append("last")
     
     
-    #load model and tokenizer
+    
+    #decomposition type
+    decomposition_type = args.decomposition_type
+    
+    #ranks 
+    start_rank = 1
+    end_rank = 100
+    rank_step = 1
+    ranks = range(start_rank, end_rank + 1, rank_step)
+
+    
     llm_name = "GPTJ"
-    llm_path = "INSERT PATH TO MODEL"
-    tokenizer = AutoTokenizer.from_pretrained(llm_path)
-    model = GPTJForCausalLM.from_pretrained(llm_path,
-                                            revision="float16",
-                                            torch_dtype=torch.float16)
+    #loading moved inside the loop. 
     
-    # CREATE SAVE DIR AND LOGGER
-    # TODO: Create save dir and logger. 
+    # Wandb init
+    wandb.init(project="TASER", name=f"GPTJ BB QA Wikidata {args.intervention_mode}, {decomposition_type} Decomposition")
+    
+    wandb_table = wandb.Table(columns=["Layer", "Rank", "Val Acc", "Val Logloss", "Test Acc", "Test Logloss"])
+    
+    # CREATE SAVE DIR AND LOGGER 
     
     home_dir = args.home_dir
     intervention_mode = args.intervention_mode
@@ -242,12 +257,50 @@ if __name__ == '__main__':
     dataset, _ = get_bb_dataset("qa_wikidata")
     
     
-    #work in progress
-    predictions = TaserGPTJExperiment.intervene(model=model,
-                                       tokenizer=tokenizer,
-                                       dataset=dataset,
-                                       intervention_mode=args.intervention_mode,
-                                       layer=args.layer,)
+    
+    
+    
+    
+    for layer in layers:
+        for rank in ranks:
+            
+            llm_name = "GPTJ"
+            llm_path = "/data/hpate061/Models/gpt-j-6b"
+            tokenizer = AutoTokenizer.from_pretrained(llm_path)
+            model = GPTJForCausalLM.from_pretrained(llm_path,
+                                                        #revision="float16",
+                                                        #torch_dtype=torch.float16,
+                                                        )
+            
+            
+            predictions = experiment.intervene(model=model,
+                                                tokenizer=tokenizer,
+                                                dataset=dataset,
+                                                intervention_mode=args.intervention_mode,
+                                                layer=layer,
+                                                rank=rank, decomposition_type=decomposition_type)
+            
+            results = experiment.validate(predictions)
+            
+            results_dict = results.to_dict()
+            
+            wandb_table.add_data(layer,
+                                 rank,
+                                 results_dict["val_acc"],
+                                 results_dict["val_logloss"],
+                                 results_dict["test_acc"],
+                                 results_dict["test_logloss"])
+            
+            print(f"Layer {layer}, Rank {rank}, {results.to_str()}")
+            
+    wandb.log({"intervention_results": wandb_table})
+    wandb.finish()
+    
+    logger.log("Experiment Complete")
+            
+            
+    
+    
     
     
     

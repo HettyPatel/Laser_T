@@ -91,7 +91,7 @@ class GPTJTaser(AbstractTaser):
         
     
     @staticmethod
-    def get_edited_model(self, model, intervention_mode, decomposition_type='cp', rank=1, layer=None):
+    def get_edited_model(model, intervention_mode, decomposition_type='cp', rank=1, layer=None):
         """
         Edit the model using the given intervention mode
         :param model: model to be edited
@@ -107,7 +107,7 @@ class GPTJTaser(AbstractTaser):
         if intervention_mode == 1:
             
             stacked_tensor = GPTJTaser.get_stacked_tensor(edited_model, intervention_mode)
-            reconstructed_tensor = GPTJTaser.return_reconstructed_tensor(stacked_tensor, decomposition_type, rank)
+            reconstructed_tensor = GPTJTaser.return_reconstructed_tensor(tensor=stacked_tensor, decomposition_type=decomposition_type, rank=rank)
             
             for i in range(model.config.num_hidden_layers):
                 edited_model.transformer.h[i].attn.k_proj.weight = torch.nn.Parameter(reconstructed_tensor[4*i])
@@ -118,7 +118,7 @@ class GPTJTaser(AbstractTaser):
         elif intervention_mode == 2:
             layer = int(layer)
             stacked_tensor = GPTJTaser.get_stacked_tensor(edited_model, intervention_mode, layer)
-            reconstructed_tensor = GPTJTaser.return_reconstructed_tensor(stacked_tensor, decomposition_type, rank)
+            reconstructed_tensor = GPTJTaser.return_reconstructed_tensor(tensor=stacked_tensor, decomposition_type=decomposition_type, rank=rank)
             
             edited_model.transformer.h[layer].attn.k_proj.weight = torch.nn.Parameter(reconstructed_tensor[0])
             edited_model.transformer.h[layer].attn.q_proj.weight = torch.nn.Parameter(reconstructed_tensor[1])
@@ -128,7 +128,7 @@ class GPTJTaser(AbstractTaser):
         elif intervention_mode == 3:
             # early Middl Last
             stacked_tensor = GPTJTaser.get_stacked_tensor(edited_model, intervention_mode, layer)
-            reconstructed_tensor = GPTJTaser.return_reconstructed_tensor(stacked_tensor, decomposition_type, rank)
+            reconstructed_tensor = GPTJTaser.return_reconstructed_tensor(tensor=stacked_tensor, decomposition_type=decomposition_type, rank=rank)
             
             thirds = model.config.num_hidden_layers // 3
             if layer == "early":
@@ -157,7 +157,7 @@ class GPTJTaser(AbstractTaser):
         elif intervention_mode == 4:
             #FC-in-out across model
             stacked_tensor = GPTJTaser.get_stacked_tensor(edited_model, intervention_mode)
-            reconstructed_tensor = GPTJTaser.return_reconstructed_tensor(stacked_tensor, decomposition_type, rank)
+            reconstructed_tensor = GPTJTaser.return_reconstructed_tensor(tensor=stacked_tensor, decomposition_type=decomposition_type, rank=rank)
             
             for i in range(model.config.num_hidden_layers):
                 edited_model.transformer.h[i].mlp.fc_in.weight = torch.nn.Parameter(reconstructed_tensor[2*i].T)
@@ -167,7 +167,7 @@ class GPTJTaser(AbstractTaser):
             layer = int(layer)
             #FC-in-out layer at a time
             stacked_tensor = GPTJTaser.get_stacked_tensor(edited_model, intervention_mode, layer)
-            reconstructed_tensor = GPTJTaser.return_reconstructed_tensor(stacked_tensor, decomposition_type, rank)
+            reconstructed_tensor = GPTJTaser.return_reconstructed_tensor(tensor=stacked_tensor, decomposition_type=decomposition_type, rank=rank)
             
             edited_model.transformer.h[layer].mlp.fc_in.weight = torch.nn.Parameter(reconstructed_tensor[0].T)
             edited_model.transformer.h[layer].mlp.fc_out.weight = torch.nn.Parameter(reconstructed_tensor[1])
@@ -175,7 +175,7 @@ class GPTJTaser(AbstractTaser):
         elif intervention_mode == 6:
             # fc in out early Middl Last
             stacked_tensor = GPTJTaser.get_stacked_tensor(edited_model, intervention_mode, layer)
-            reconstructed_tensor = GPTJTaser.return_reconstructed_tensor(stacked_tensor, decomposition_type, rank)
+            reconstructed_tensor = GPTJTaser.return_reconstructed_tensor(tensor=stacked_tensor, decomposition_type=decomposition_type, rank=rank)
             
             thirds = model.config.num_hidden_layers // 3
             
@@ -201,26 +201,26 @@ class GPTJTaser(AbstractTaser):
     
     
     @staticmethod
-    def return_reconstructed_tensor(tensor, rank, decomp_type):
+    def return_reconstructed_tensor(tensor, rank, decomposition_type):
         """
         return the reconstructed tensor for the given tensor with given rank and decomp_type.
         """
         tl.set_backend('pytorch')
         
-        if decomp_type == 'cp':
+        if decomposition_type == 'cp':
             tensorly_tensor = tl.tensor(tensor, device='cuda')
             factors = parafac(tensorly_tensor, rank=rank, init='random')
             reconstructed_tensor = tl.kruskal_to_tensor(factors)
         
         
         # Need to update to do different ranks for eeach mode if using tucker
-        elif decomp_type == 'tucker':
+        elif decomposition_type == 'tucker':
             tensorly_tensor = tl.tensor(tensor, device='cuda')
             tucker_tensor = tucker(tensorly_tensor, rank=rank, init='random')
             reconstructed_tensor = tl.tucker_to_tensor(tucker_tensor)
             
         else:
-            raise AssertionError(f"Unhandled decomposition type {decomp_type}")
+            raise AssertionError(f"Unhandled decomposition type {decomposition_type}")
         
         return reconstructed_tensor
            
