@@ -60,12 +60,17 @@ class TaserGPTJExperiment:
             
         def intervene(self, model, tokenizer, dataset, intervention_mode, layer, rank, decomposition_type="cp"):
             
+            
             dataset_size = len(dataset)
             
             self.logger.log(f"Starting intervention mode {intervention_mode} on layer {layer}")
             
             time_edit_start = time.time()
-            model_edit = GPTJTaser.get_edited_model(model=model, intervention_mode=intervention_mode, layer=layer, rank=rank, decomposition_type=decomposition_type)
+            
+            if intervention_mode == None:
+                model_edit = model
+            else:
+                model_edit = GPTJTaser.get_edited_model(model=model, intervention_mode=intervention_mode, layer=layer, rank=rank, decomposition_type=decomposition_type)
             
             model_edit.to(self.device)
             self.logger.log(f"Edited and put model on device in time {elapsed_from_str(time_edit_start)}")
@@ -80,7 +85,9 @@ class TaserGPTJExperiment:
                 tokenizer.padding_side = 'left'
 
             #TODO Convert batch_size to argument from argparse
-            batch_size = 256
+            #=========================================================================================================
+            batch_size = 200
+            #=========================================================================================================
             for i in tqdm(range(0, dataset_size, batch_size)):
                 batch_end = min(i + batch_size, dataset_size)
                 batch = dataset[i:batch_end]
@@ -187,7 +194,9 @@ class TaserGPTJExperiment:
             
             
                     
-                    
+# =================================================================================================================================================================
+#    <-------------------------------------------- MAIN FUNCTION -------------------------------------------->
+# =================================================================================================================================================================     
                     
                         
 
@@ -256,21 +265,38 @@ if __name__ == '__main__':
     
     # TODO: ADD A BASELINE CALCULATION WITHOUT THE EDIT STORE LATER IN RESULTS.
     #baseline experiment
-    # llm_name = "GPTJ"
-    # llm_path = "/data/hpate061/Models/gpt-j-6b"
-    # tokenizer = AutoTokenizer.from_pretrained(llm_path)
-    # model = GPTJForCausalLM.from_pretrained(llm_path,
-    #                                         #revision="float16",
-    #                                         #torch_dtype=torch.float16,
-    #                                         )
+    llm_name = "GPTJ"
+    llm_path = "/data/hpate061/Models/gpt-j-6b"
+    tokenizer = AutoTokenizer.from_pretrained(llm_path)
+    model = GPTJForCausalLM.from_pretrained(llm_path,
+                                            #revision="float16",
+                                            #torch_dtype=torch.float16,
+                                            )
     
-    # predictions = experiment.intervene(model=model,
-    #                                     tokenizer=tokenizer,
-    #                                     dataset=dataset,
-    #                                     intervention_mode=None,
-    #                                     layer=None,
-    #                                     rank=None, decomposition_type=None)
+    predictions = experiment.intervene(model=model,
+                                        tokenizer=tokenizer,
+                                        dataset=dataset,
+                                        intervention_mode=None,
+                                        layer=None,
+                                        rank=None, decomposition_type=None)
     
+    base_results = experiment.validate(predictions)
+    
+    base_results_dict = base_results.to_dict()
+    
+    wandb_table.add_data("Baseline",
+                            "Baseline",
+                            base_results_dict["val_acc"],
+                            base_results_dict["val_logloss"],
+                            base_results_dict["test_acc"],
+                            base_results_dict["test_logloss"])
+    
+    base_val_acc = base_results_dict["val_acc"]
+    base_val_logloss = base_results_dict["val_logloss"]
+    base_test_acc = base_results_dict["test_acc"]
+    base_test_logloss = base_results_dict["test_logloss"]
+    
+    print(f"Baseline, {base_results.to_str()}")
     
     for layer in layers:
         for rank in ranks:
