@@ -41,58 +41,54 @@ class Results:
 
 class TaserGPTJExperiment:
     
-    def __init__(self, save_dir, logger, batch_size=256):
-        self.save_dir = save_dir
-        self.logger = logger
-        self.batch_size = batch_size
-        
-        # Object to measure progress
-        self.progress = Progress(logger=logger)
-        
-        # Object to measure metrics
-        self.case_sensitive = False
-        self.strip = True
-        self.metrics = Metrics(case_sensitive=self.case_sensitive, strip=self.strip)
-        
-        self.dataset_metric = DatasetMetrics(logger=logger)
-        
-        self.device = "cuda" if torch.cuda.is_available() else "cpu"
-        
-    def intervene(self, model, tokenizer, dataset, intervention_mode, layer, rank, decomposition_type="cp"):
-        
-        dataset_size = len(dataset)
-        
-        self.logger.log(f"Starting intervention mode {intervention_mode} on layer {layer}")
-        
-        time_edit_start = time.time()
-        model_edit = GPTJTaser.get_edited_model(model=model, intervention_mode=intervention_mode, layer=layer, rank=rank, decomposition_type=decomposition_type)
-        
-        model_edit.to(self.device)
-        self.logger.log(f"Edited and put model on device in time {elapsed_from_str(time_edit_start)}")
-        
-        predictions = []
-        
-        self.dataset_metric.reset()
-        self.progress.start()
+        def __init__(self, save_dir, logger):
+            self.save_sir = save_dir
+            self.logger = logger
+            
+            #Object to measure progress
+            self.progress = Progress(logger=logger)
+            
+            #object to measure metrics
+            self.case_sensitive = False
+            self.strip = True
+            self.metrics = Metrics(case_sensitive=self.case_sensitive, strip=self.strip)
+            
+            self.dataset_metric = DatasetMetrics(logger=logger)
+            
+            self.device = "cuda" if torch.cuda.is_available() else "cpu"      
+            
+            
+        def intervene(self, model, tokenizer, dataset, intervention_mode, layer, rank, decomposition_type="cp"):
+            
+            dataset_size = len(dataset)
+            
+            self.logger.log(f"Starting intervention mode {intervention_mode} on layer {layer}")
+            
+            time_edit_start = time.time()
+            model_edit = GPTJTaser.get_edited_model(model=model, intervention_mode=intervention_mode, layer=layer, rank=rank, decomposition_type=decomposition_type)
+            
+            model_edit.to(self.device)
+            self.logger.log(f"Edited and put model on device in time {elapsed_from_str(time_edit_start)}")
+            
+            predictions = []
+            
+            self.dataset_metric.reset()
+            self.progress.start()
+            
+            if tokenizer.pad_token is None:
+                tokenizer.pad_token = tokenizer.eos_token
+                tokenizer.padding_side = 'left'
 
-        # Group dataset by input lengths to avoid padding
-        grouped_data = {}
-        for entry in dataset:
-            prompt, answer = entry[0].strip(), entry[1].strip()
-            prompt_length = len(tokenizer(prompt)['input_ids'])
-            if prompt_length not in grouped_data:
-                grouped_data[prompt_length] = []
-            grouped_data[prompt_length].append((prompt, answer))
-
-        for prompt_length, group in grouped_data.items():
-            for i in tqdm(range(0, len(group), self.batch_size)):
-                batch_end = min(i + self.batch_size, len(group))
-                batch = group[i:batch_end]
+            #TODO Convert batch_size to argument from argparse
+            batch_size = 256
+            for i in tqdm(range(0, dataset_size, batch_size)):
+                batch_end = min(i + batch_size, dataset_size)
+                batch = dataset[i:batch_end]
                 
-                prompts = [entry[0] for entry in batch]
-                answers = [entry[1] for entry in batch]
-                inputs = tokenizer(prompts, return_tensors="pt").to(self.device)
-                input_and_answers = tokenizer([f"{p} {a}" for p, a in zip(prompts, answers)], return_tensors="pt").to(self.device)
+                prompts = [entry[0].strip() for entry in batch]
+                answers = [entry[1].strip() for entry in batch]
+                inputs = tokenizer(prompts, return_tensors="pt", padding=True).to(self.device)
+                input_and_answers = tokenizer([f"{p} {a}" for p, a in zip(prompts, answers)], return_tensors="pt", padding=True).to(self.device)
                 
                 with torch.no_grad():
                     generate_ids = model_edit.generate(inputs.input_ids, max_new_tokens=10, min_new_tokens=1)
@@ -132,92 +128,109 @@ class TaserGPTJExperiment:
                         }
                         predictions.append(predictions_)
                         
-                    if (i // self.batch_size) % 100 == 0:
+                    if (i // batch_size) % 100 == 0:
                         # Print partial performance and telemetry data
                         self.dataset_metric.print()
                         self.progress.print(ex_done=i, ex_left=(dataset_size - i))
                         
-        self.terminate_and_save(predictions)
-        
-        return predictions
-    
-    def terminate_and_save(self, predictions):
-        
-        self.logger.log("Saving results. Final Performance is given below: ")
-        self.dataset_metric.terminate()
-        self.dataset_metric.print()
-        
-        time_start = time.time()
-        
-        # Save predictions
-        save_pred_fname = f"{self.save_dir}/{self.llm_name}-predictions-{self.intervention_mode}.pkl"
-        
-        with open(save_pred_fname, "wb") as f:
-            pickle.dump(predictions, f)
+            self.terminate_and_save(predictions)
             
-        save_summary_fname = f"{self.save_dir}/{self.llm_name}-summary-{self.intervention_mode}.txt"
+            return predictions
         
-        results = self.dataset_metric.agg_to_dict()
-        
-        for k, v in args.__dict__.items():
-            results["args/%s" % k] = v
+        def terminate_and_save(self, predictions):
             
-        with open(save_summary_fname, "wb") as f:
-            pickle.dump(results, f)
+            self.logger.log("Saving results. Final Performance is given below: ")
+            self.dataset_metric.terminate()
+            self.dataset_metric.print()
             
-        self.logger.log(f"Time taken to store all results: {elapsed_from_str(time_start)}")
-    
-    @staticmethod
-    def get_acc_log_loss(predictions):
-        acc = np.mean([1.0 if prediction["correct"] else 0.0 for prediction in predictions]) * 100.0
-        log_loss = np.mean([-prediction["answer_logprob"] / float(prediction["answer_length"]) for prediction in predictions])
+            time_start = time.time()
+            
+            # Save predictions
+            save_pred_fname = f"{self.save_dir}/{self.llm_name}-predictions-{self.intervention_mode}.pkl"
+            
+            with open(save_pred_fname, "wb") as f:
+                pickle.dump(predictions, f)
+                
+            save_summary_fname = f"{self.save_dir}/{self.llm_name}-summary-{self.intervention_mode}.txt"
+            
+            results = self.dataset_metric.agg_to_dict()
+            
+            for k, v in args.__dict__.items():
+                results["args/%s" % k] = v
+                
+            with open(save_summary_fname, "wb") as f:
+                pickle.dump(results, f)
+                
+            self.logger.log(f"Time taken to store all results: {elapsed_from_str(time_start)}")
+            
+        @staticmethod
+        def get_acc_log_loss(predictions):
+            acc = np.mean([1.0 if prediction["correct"] else 0.0 for prediction in predictions]) * 100.0
+            log_loss = np.mean([-prediction["answer_logprob"]/float(prediction["answer_length"]) for prediction in predictions])
+            
+            return acc, log_loss
         
-        return acc, log_loss
-    
-    @staticmethod
-    def validate(predictions, split=0.2):
-        
-        val_size = int(split * len(predictions))
-        validation_predictions = predictions[:val_size]
-        test_predictions = predictions[val_size:]
-        
-        val_acc, val_logloss = TaserGPTJExperiment.get_acc_log_loss(validation_predictions)
-        test_acc, test_logloss = TaserGPTJExperiment.get_acc_log_loss(test_predictions)
-        
-        return Results(val_acc=val_acc,
-                       val_logloss=val_logloss,
-                       test_acc=test_acc,
-                       test_logloss=test_logloss)
-
+        @staticmethod
+        def validate(predictions, split=0.2):
+            
+            val_size = int(split * len(predictions))
+            validation_predictions = predictions[:val_size]
+            test_predictions = predictions[val_size:]
+            
+            val_acc, val_logloss = TaserGPTJExperiment.get_acc_log_loss(validation_predictions)
+            test_acc, test_logloss = TaserGPTJExperiment.get_acc_log_loss(test_predictions)
+            
+            return Results(val_acc=val_acc,
+                           val_logloss=val_logloss,
+                           test_acc=test_acc,
+                           test_logloss=test_logloss)
+            
+            
+                    
+                    
+                    
+                        
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="GPTJ LLM Experiment")
     
     # parser arguments
     parser.add_argument('--intervention_mode',
-                        type=int, help='1. QKVO across Model \n2. QKVO 1 layer at a time \n3. QKVO (Early, Middle, Last)\
+                    type=int, help='1. QKVO across Model \n2. QKVO 1 layer at a time \n3. QKVO (Early, Middle, Last)\
                         \n4. FC-in-out across model\n5. FC-in-out 1 layer at a time \n6. FC-in-out (Early, middle, end)',
                         default=1, choices=[1, 2, 3, 4, 5, 6])
+    
+    
+    #should this be a list of strings so we can do all and early middle last all in the same run?
+    #maybe log a table with model, dataset, intervention_mode, layer, rank, and results ? 
+    #can extract figures from the table later as needed
+    #list of layers to intervene on    
     parser.add_argument('--home_dir', type=str, help='Home directory for saving results', default="/home/hpate061/Laser_T/results")
     parser.add_argument('--decomposition_type', type=str, help='Decomposition type for rank reduction', default="cp", choices=["cp", "tucker"])
-    parser.add_argument('--batch_size', type=int, help='Batch size for processing', default=1)
     
     args = parser.parse_args()
     
     # For all layers and early, middle, last
-    layers = list(range(0, 28))
-    layers.extend(["early", "middle", "last"])
+    layers = range(0,28)
+    layers = [str(layer) for layer in layers]
+    layers.append("early")
+    layers.append("middle")
+    layers.append("last")
     
-    # Decomposition type
+    
+    
+    #decomposition type
     decomposition_type = args.decomposition_type
     
-    # Ranks 
+    #ranks 
     start_rank = 1
     end_rank = 100
     rank_step = 1
     ranks = range(start_rank, end_rank + 1, rank_step)
+
     
     llm_name = "GPTJ"
+    #loading moved inside the loop. 
     
     # Wandb init
     wandb.init(project="TASER", name=f"GPTJ BB QA Wikidata {args.intervention_mode}, {decomposition_type} Decomposition")
@@ -225,6 +238,7 @@ if __name__ == '__main__':
     wandb_table = wandb.Table(columns=["Layer", "Rank", "Val Acc", "Val Logloss", "Test Acc", "Test Logloss"])
     
     # CREATE SAVE DIR AND LOGGER 
+    
     home_dir = args.home_dir
     intervention_mode = args.intervention_mode
     save_dir = f"{home_dir}/{intervention_mode}/{llm_name}_intervention_results"
@@ -234,23 +248,48 @@ if __name__ == '__main__':
         
     logger = Logger(save_dir=save_dir, fname=f"{llm_name}_experiment.log")
     
-    experiment = TaserGPTJExperiment(save_dir=save_dir, logger=logger, batch_size=args.batch_size)
+    experiment = TaserGPTJExperiment(save_dir=save_dir, logger=logger)
+    
     
     dataset, _ = get_bb_dataset("qa_wikidata")
     
+    
+    # TODO: ADD A BASELINE CALCULATION WITHOUT THE EDIT STORE LATER IN RESULTS.
+    #baseline experiment
+    # llm_name = "GPTJ"
+    # llm_path = "/data/hpate061/Models/gpt-j-6b"
+    # tokenizer = AutoTokenizer.from_pretrained(llm_path)
+    # model = GPTJForCausalLM.from_pretrained(llm_path,
+    #                                         #revision="float16",
+    #                                         #torch_dtype=torch.float16,
+    #                                         )
+    
+    # predictions = experiment.intervene(model=model,
+    #                                     tokenizer=tokenizer,
+    #                                     dataset=dataset,
+    #                                     intervention_mode=None,
+    #                                     layer=None,
+    #                                     rank=None, decomposition_type=None)
+    
+    
     for layer in layers:
         for rank in ranks:
+            
             llm_name = "GPTJ"
             llm_path = "/data/hpate061/Models/gpt-j-6b"
             tokenizer = AutoTokenizer.from_pretrained(llm_path)
-            model = GPTJForCausalLM.from_pretrained(llm_path)
+            model = GPTJForCausalLM.from_pretrained(llm_path,
+                                                        #revision="float16",
+                                                        #torch_dtype=torch.float16,
+                                                        )
+            
             
             predictions = experiment.intervene(model=model,
-                                               tokenizer=tokenizer,
-                                               dataset=dataset,
-                                               intervention_mode=args.intervention_mode,
-                                               layer=layer,
-                                               rank=rank, decomposition_type=decomposition_type)
+                                                tokenizer=tokenizer,
+                                                dataset=dataset,
+                                                intervention_mode=args.intervention_mode,
+                                                layer=layer,
+                                                rank=rank, decomposition_type=decomposition_type)
             
             results = experiment.validate(predictions)
             
@@ -269,7 +308,9 @@ if __name__ == '__main__':
     wandb.finish()
     
     logger.log("Experiment Complete")
-
+            
+            
+    
     
     
     
