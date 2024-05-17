@@ -4,6 +4,7 @@ import torch
 import pickle 
 import argparse
 import numpy as np
+import pandas as pd
 from tqdm import tqdm 
 from transformers import AutoTokenizer
 from transformers import GPTJForCausalLM
@@ -237,15 +238,16 @@ if __name__ == '__main__':
     end_rank = 100
     rank_step = 1
     ranks = range(start_rank, end_rank + 1, rank_step)
-
-    
     llm_name = "GPTJ"
-    #loading moved inside the loop. 
     
+    #=========================================================================================================#
+    # <-------------------------------------------- LOGGING -------------------------------------------->
+    #==========================================================================================================#
     # Wandb init
     wandb.init(project="TASER", name=f"GPTJ BB QA Wikidata {args.intervention_mode}, {decomposition_type} Decomposition")
-    
     wandb_table = wandb.Table(columns=["Layer", "Rank", "Val Acc", "Val Logloss", "Test Acc", "Test Logloss"])
+    #dataframe to also save results
+    results_df = pd.DataFrame(columns=["Layer", "Rank", "Val Acc", "Val Logloss", "Test Acc", "Test Logloss"])
     
     # CREATE SAVE DIR AND LOGGER 
     
@@ -297,6 +299,13 @@ if __name__ == '__main__':
     base_test_acc = base_results_dict["test_acc"]
     base_test_logloss = base_results_dict["test_logloss"]
     
+    results_df = results_df.append({"Layer": "Baseline",
+                                    "Rank": "Baseline",
+                                    "Val Acc": base_val_acc,
+                                    "Val Logloss": base_val_logloss,
+                                    "Test Acc": base_test_acc,
+                                    "Test Logloss": base_test_logloss}, ignore_index=True)
+    
     print(f"Baseline, {base_results.to_str()}")
     
     for layer in layers:
@@ -328,6 +337,15 @@ if __name__ == '__main__':
                                  results_dict["val_logloss"],
                                  results_dict["test_acc"],
                                  results_dict["test_logloss"])
+            
+            results_df = results_df.append({"Layer": layer,
+                                            "Rank": rank,
+                                            "Val Acc": results_dict["val_acc"],
+                                            "Val Logloss": results_dict["val_logloss"],
+                                            "Test Acc": results_dict["test_acc"],
+                                            "Test Logloss": results_dict["test_logloss"]}, ignore_index=True)
+            
+            results_df.to_csv(f"/home/hpate061/Laser_T/results/TASER_GPTJ_BBH_QA_RESULTS.csv", index=False)
             
             print(f"Layer {layer}, Rank {rank}, {results.to_str()}")
             
