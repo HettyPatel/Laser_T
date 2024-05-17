@@ -1,0 +1,106 @@
+
+Special tokens have been added in the vocabulary, make sure the associated word embeddings are fine-tuned or trained.
+Main: Msg: Starting intervention mode None on layer None
+Main: Msg: Edited and put model on device in time 3 second
+  0%|                                                                                                                                                                                                                                         | 0/95 [00:00<?, ?it/s]The attention mask and the pad token id were not set. As a consequence, you may observe unexpected behavior. Please pass your input's `attention_mask` to obtain reliable results.
+Setting `pad_token_id` to `eos_token_id`:50256 for open-end generation.
+  1%|██▎                                                                                                                                                                                                                              | 1/95 [00:16<25:17, 16.15s/it]The attention mask and the pad token id were not set. As a consequence, you may observe unexpected behavior. Please pass your input's `attention_mask` to obtain reliable results.
+Setting `pad_token_id` to `eos_token_id`:50256 for open-end generation.
+Main: Msg: After 200 0-1 Correctness is 40.0 percentage, Mean F1 score is 0.05972434999640877, Mean Log Prob is -4.027258136809494.
+Main: Msg: Processed 0 examples. Total time taken is 16 second. Avg time per example is 16 second.
+Main: Msg: Remaining 18812 examples. Expected Total time taken to complete is 3 days.
+  2%|████▋                                                                                                                                                                                                                            | 2/95 [00:36<28:50, 18.61s/it]The attention mask and the pad token id were not set. As a consequence, you may observe unexpected behavior. Please pass your input's `attention_mask` to obtain reliable results.
+Setting `pad_token_id` to `eos_token_id`:50256 for open-end generation.
+  3%|███████                                                                                                                                                                                                                          | 3/95 [00:53<27:40, 18.05s/it]The attention mask and the pad token id were not set. As a consequence, you may observe unexpected behavior. Please pass your input's `attention_mask` to obtain reliable results.
+Setting `pad_token_id` to `eos_token_id`:50256 for open-end generation.
+  4%|█████████▍                                                                                                                                                                                                                       | 4/95 [01:14<29:01, 19.14s/it]The attention mask and the pad token id were not set. As a consequence, you may observe unexpected behavior. Please pass your input's `attention_mask` to obtain reliable results.
+Setting `pad_token_id` to `eos_token_id`:50256 for open-end generation.
+  5%|███████████▊                                                                                                                                                                                                                     | 5/95 [01:27<25:19, 16.89s/it]The attention mask and the pad token id were not set. As a consequence, you may observe unexpected behavior. Please pass your input's `attention_mask` to obtain reliable results.
+Setting `pad_token_id` to `eos_token_id`:50256 for open-end generation.
+  6%|██████████████▏                                                                                                                                                                                                                  | 6/95 [01:37<21:36, 14.57s/it]The attention mask and the pad token id were not set. As a consequence, you may observe unexpected behavior. Please pass your input's `attention_mask` to obtain reliable results.
+Setting `pad_token_id` to `eos_token_id`:50256 for open-end generation.
+  7%|████████████████▌                                                                                                                                                                                                                | 7/95 [01:46<18:46, 12.80s/it]The attention mask and the pad token id were not set. As a consequence, you may observe unexpected behavior. Please pass your input's `attention_mask` to obtain reliable results.
+Setting `pad_token_id` to `eos_token_id`:50256 for open-end generation.
+  8%|██████████████████▉                                                                                                                                                                                                              | 8/95 [01:56<17:11, 11.86s/it]The attention mask and the pad token id were not set. As a consequence, you may observe unexpected behavior. Please pass your input's `attention_mask` to obtain reliable results.
+Setting `pad_token_id` to `eos_token_id`:50256 for open-end generation.
+  9%|█████████████████████▎                                                                                                                                                                                                           | 9/95 [02:06<16:07, 11.25s/it]The attention mask and the pad token id were not set. As a consequence, you may observe unexpected behavior. Please pass your input's `attention_mask` to obtain reliable results.
+Setting `pad_token_id` to `eos_token_id`:50256 for open-end generation.
+ 11%|███████████████████████▌                                                                                                                                                                                                        | 10/95 [02:15<15:04, 10.64s/it]The attention mask and the pad token id were not set. As a consequence, you may observe unexpected behavior. Please pass your input's `attention_mask` to obtain reliable results.
+Setting `pad_token_id` to `eos_token_id`:50256 for open-end generation.
+ 12%|█████████████████████████▉                                                                                                                                                                                                      | 11/95 [02:26<14:49, 10.59s/it]The attention mask and the pad token id were not set. As a consequence, you may observe unexpected behavior. Please pass your input's `attention_mask` to obtain reliable results.
+Setting `pad_token_id` to `eos_token_id`:50256 for open-end generation.
+ 13%|████████████████████████████▎                                                                                                                                                                                                   | 12/95 [02:39<15:57, 11.53s/it]The attention mask and the pad token id were not set. As a consequence, you may observe unexpected behavior. Please pass your input's `attention_mask` to obtain reliable results.
+Setting `pad_token_id` to `eos_token_id`:50256 for open-end generation.
+ 14%|██████████████████████████████▋                                                                                                                                                                                                 | 13/95 [02:50<15:17, 11.18s/it]The attention mask and the pad token id were not set. As a consequence, you may observe unexpected behavior. Please pass your input's `attention_mask` to obtain reliable results.
+Setting `pad_token_id` to `eos_token_id`:50256 for open-end generation.
+ 15%|█████████████████████████████████                                                                                                                                                                                               | 14/95 [02:59<14:17, 10.59s/it]The attention mask and the pad token id were not set. As a consequence, you may observe unexpected behavior. Please pass your input's `attention_mask` to obtain reliable results.
+Setting `pad_token_id` to `eos_token_id`:50256 for open-end generation.
+ 16%|███████████████████████████████████▎                                                                                                                                                                                            | 15/95 [03:09<13:39, 10.24s/it]The attention mask and the pad token id were not set. As a consequence, you may observe unexpected behavior. Please pass your input's `attention_mask` to obtain reliable results.
+Setting `pad_token_id` to `eos_token_id`:50256 for open-end generation.
+ 17%|█████████████████████████████████████▋                                                                                                                                                                                          | 16/95 [03:19<13:34, 10.30s/it]The attention mask and the pad token id were not set. As a consequence, you may observe unexpected behavior. Please pass your input's `attention_mask` to obtain reliable results.
+Setting `pad_token_id` to `eos_token_id`:50256 for open-end generation.
+ 18%|████████████████████████████████████████                                                                                                                                                                                        | 17/95 [03:31<13:54, 10.70s/it]The attention mask and the pad token id were not set. As a consequence, you may observe unexpected behavior. Please pass your input's `attention_mask` to obtain reliable results.
+Setting `pad_token_id` to `eos_token_id`:50256 for open-end generation.
+ 19%|██████████████████████████████████████████▍                                                                                                                                                                                     | 18/95 [03:38<12:32,  9.77s/it]The attention mask and the pad token id were not set. As a consequence, you may observe unexpected behavior. Please pass your input's `attention_mask` to obtain reliable results.
+Setting `pad_token_id` to `eos_token_id`:50256 for open-end generation.
+ 20%|████████████████████████████████████████████▊                                                                                                                                                                                   | 19/95 [03:47<12:08,  9.59s/it]The attention mask and the pad token id were not set. As a consequence, you may observe unexpected behavior. Please pass your input's `attention_mask` to obtain reliable results.
+Setting `pad_token_id` to `eos_token_id`:50256 for open-end generation.
+ 21%|███████████████████████████████████████████████▏                                                                                                                                                                                | 20/95 [03:56<11:39,  9.32s/it]The attention mask and the pad token id were not set. As a consequence, you may observe unexpected behavior. Please pass your input's `attention_mask` to obtain reliable results.
+Setting `pad_token_id` to `eos_token_id`:50256 for open-end generation.
+ 21%|███████████████████████████████████████████████▏                                                                                                                                                                                | 20/95 [03:56<14:48, 11.84s/it]
+Traceback (most recent call last):
+  File "/data/home/hpate061/Laser_T/src/TASER_intervention_gptj_bbh_qa.py", line 276, in <module>
+    predictions = experiment.intervene(model=model,
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/home/hpate061/Laser_T/src/TASER_intervention_gptj_bbh_qa.py", line 101, in intervene
+    generate_ids = model_edit.generate(inputs.input_ids, max_new_tokens=10, min_new_tokens=1)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hpate061/anaconda3/envs/Research/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 115, in decorate_context
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hpate061/anaconda3/envs/Research/lib/python3.11/site-packages/transformers/generation/utils.py", line 1606, in generate
+    return self.greedy_search(
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/hpate061/anaconda3/envs/Research/lib/python3.11/site-packages/transformers/generation/utils.py", line 2454, in greedy_search
+    outputs = self(
+              ^^^^^
+  File "/home/hpate061/anaconda3/envs/Research/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1518, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hpate061/anaconda3/envs/Research/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1527, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hpate061/anaconda3/envs/Research/lib/python3.11/site-packages/transformers/models/gptj/modeling_gptj.py", line 855, in forward
+    transformer_outputs = self.transformer(
+                          ^^^^^^^^^^^^^^^^^
+  File "/home/hpate061/anaconda3/envs/Research/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1518, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hpate061/anaconda3/envs/Research/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1527, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hpate061/anaconda3/envs/Research/lib/python3.11/site-packages/transformers/models/gptj/modeling_gptj.py", line 690, in forward
+    outputs = block(
+              ^^^^^^
+  File "/home/hpate061/anaconda3/envs/Research/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1518, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hpate061/anaconda3/envs/Research/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1527, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hpate061/anaconda3/envs/Research/lib/python3.11/site-packages/transformers/models/gptj/modeling_gptj.py", line 309, in forward
+    attn_outputs = self.attn(
+                   ^^^^^^^^^^
+  File "/home/hpate061/anaconda3/envs/Research/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1518, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hpate061/anaconda3/envs/Research/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1527, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hpate061/anaconda3/envs/Research/lib/python3.11/site-packages/transformers/models/gptj/modeling_gptj.py", line 257, in forward
+    attn_output, attn_weights = self._attn(query, key, value, attention_mask, head_mask)
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hpate061/anaconda3/envs/Research/lib/python3.11/site-packages/transformers/models/gptj/modeling_gptj.py", line 166, in _attn
+    mask_value = torch.tensor(mask_value, dtype=attn_weights.dtype).to(attn_weights.device)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+KeyboardInterrupt

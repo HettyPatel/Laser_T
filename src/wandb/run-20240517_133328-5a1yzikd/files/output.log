@@ -1,0 +1,26 @@
+
+Special tokens have been added in the vocabulary, make sure the associated word embeddings are fine-tuned or trained.
+/home/hpate061/anaconda3/envs/Research/lib/python3.11/site-packages/tensorly/backend/pytorch_backend.py:39: UserWarning: To copy construct from a tensor, it is recommended to use sourceTensor.clone().detach() or sourceTensor.clone().detach().requires_grad_(True), rather than torch.tensor(sourceTensor).
+  return torch.tensor(
+Main: Msg: Starting intervention mode 1 on layer 0
+  0%|                                                                                                                                                                                                                                                                                                                                                                                                              | 0/74 [00:00<?, ?it/s]
+Traceback (most recent call last):
+  File "/data/home/hpate061/Laser_T/src/TASER_intervention_gptj_bbh_qa.py", line 282, in <module>
+    predictions = experiment.intervene(model=model,
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/home/hpate061/Laser_T/src/TASER_intervention_gptj_bbh_qa.py", line 85, in intervene
+    inputs = tokenizer(prompts, return_tensors="pt", padding=True).to(self.device)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hpate061/anaconda3/envs/Research/lib/python3.11/site-packages/transformers/tokenization_utils_base.py", line 2790, in __call__
+    encodings = self._call_one(text=text, text_pair=text_pair, **all_kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hpate061/anaconda3/envs/Research/lib/python3.11/site-packages/transformers/tokenization_utils_base.py", line 2876, in _call_one
+    return self.batch_encode_plus(
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hpate061/anaconda3/envs/Research/lib/python3.11/site-packages/transformers/tokenization_utils_base.py", line 3058, in batch_encode_plus
+    padding_strategy, truncation_strategy, max_length, kwargs = self._get_padding_truncation_strategies(
+                                                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hpate061/anaconda3/envs/Research/lib/python3.11/site-packages/transformers/tokenization_utils_base.py", line 2695, in _get_padding_truncation_strategies
+    raise ValueError(
+ValueError: Asking to pad but the tokenizer does not have a padding token. Please select a token to use as `pad_token` `(tokenizer.pad_token = tokenizer.eos_token e.g.)` or add a new pad token via `tokenizer.add_special_tokens({'pad_token': '[PAD]'})`.
+Main: Msg: Edited and put model on device in time 8 second

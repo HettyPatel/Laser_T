@@ -1,0 +1,67 @@
+
+Special tokens have been added in the vocabulary, make sure the associated word embeddings are fine-tuned or trained.
+Main: Msg: Starting intervention mode 1 on layer 0
+/home/hpate061/anaconda3/envs/Research/lib/python3.11/site-packages/tensorly/backend/pytorch_backend.py:39: UserWarning: To copy construct from a tensor, it is recommended to use sourceTensor.clone().detach() or sourceTensor.clone().detach().requires_grad_(True), rather than torch.tensor(sourceTensor).
+  return torch.tensor(
+Main: Msg: Edited and put model on device in time 8 second
+  0%|                                                                                                                                                                                                                                                                                                                                                                                                              | 0/74 [00:00<?, ?it/s]The attention mask and the pad token id were not set. As a consequence, you may observe unexpected behavior. Please pass your input's `attention_mask` to obtain reliable results.
+Setting `pad_token_id` to `eos_token_id`:50256 for open-end generation.
+Main: Msg: After 256 0-1 Correctness is 1.171875 percentage, Mean F1 score is 0.0022017045454545458, Mean Log Prob is -11.159617831309637.
+Main: Msg: Processed 0 examples. Total time taken is 12 second. Avg time per example is 12 second.
+Main: Msg: Remaining 18812 examples. Expected Total time taken to complete is 2 days.
+  1%|█████▎                                                                                                                                                                                                                                                                                                                                                                                                | 1/74 [00:12<14:36, 12.01s/it]The attention mask and the pad token id were not set. As a consequence, you may observe unexpected behavior. Please pass your input's `attention_mask` to obtain reliable results.
+Setting `pad_token_id` to `eos_token_id`:50256 for open-end generation.
+  1%|█████▎                                                                                                                                                                                                                                                                                                                                                                                                | 1/74 [00:20<25:27, 20.93s/it]
+Traceback (most recent call last):
+  File "/data/home/hpate061/Laser_T/src/TASER_intervention_gptj_bbh_qa.py", line 287, in <module>
+    predictions = experiment.intervene(model=model,
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/home/hpate061/Laser_T/src/TASER_intervention_gptj_bbh_qa.py", line 94, in intervene
+    generate_ids = model_edit.generate(inputs.input_ids, max_new_tokens=10, min_new_tokens=1)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hpate061/anaconda3/envs/Research/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 115, in decorate_context
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hpate061/anaconda3/envs/Research/lib/python3.11/site-packages/transformers/generation/utils.py", line 1606, in generate
+    return self.greedy_search(
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/hpate061/anaconda3/envs/Research/lib/python3.11/site-packages/transformers/generation/utils.py", line 2454, in greedy_search
+    outputs = self(
+              ^^^^^
+  File "/home/hpate061/anaconda3/envs/Research/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1518, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hpate061/anaconda3/envs/Research/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1527, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hpate061/anaconda3/envs/Research/lib/python3.11/site-packages/transformers/models/gptj/modeling_gptj.py", line 855, in forward
+    transformer_outputs = self.transformer(
+                          ^^^^^^^^^^^^^^^^^
+  File "/home/hpate061/anaconda3/envs/Research/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1518, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hpate061/anaconda3/envs/Research/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1527, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hpate061/anaconda3/envs/Research/lib/python3.11/site-packages/transformers/models/gptj/modeling_gptj.py", line 690, in forward
+    outputs = block(
+              ^^^^^^
+  File "/home/hpate061/anaconda3/envs/Research/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1518, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hpate061/anaconda3/envs/Research/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1527, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hpate061/anaconda3/envs/Research/lib/python3.11/site-packages/transformers/models/gptj/modeling_gptj.py", line 309, in forward
+    attn_outputs = self.attn(
+                   ^^^^^^^^^^
+  File "/home/hpate061/anaconda3/envs/Research/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1518, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hpate061/anaconda3/envs/Research/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1527, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hpate061/anaconda3/envs/Research/lib/python3.11/site-packages/transformers/models/gptj/modeling_gptj.py", line 248, in forward
+    key = torch.cat((past_key, key), dim=-2)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+torch.cuda.OutOfMemoryError: CUDA out of memory. Tried to allocate 132.00 MiB. GPU 0 has a total capacty of 47.54 GiB of which 58.25 MiB is free. Process 220544 has 516.00 MiB memory in use. Process 221752 has 364.00 MiB memory in use. Process 221753 has 364.00 MiB memory in use. Process 692611 has 364.00 MiB memory in use. Process 696143 has 364.00 MiB memory in use. Process 782092 has 364.00 MiB memory in use. Including non-PyTorch memory, this process has 45.17 GiB memory in use. Of the allocated memory 41.79 GiB is allocated by PyTorch, and 3.04 GiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting max_split_size_mb to avoid fragmentation.  See documentation for Memory Management and PYTORCH_CUDA_ALLOC_CONF

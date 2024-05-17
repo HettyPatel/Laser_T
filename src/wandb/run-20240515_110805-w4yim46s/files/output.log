@@ -1,0 +1,17 @@
+
+Special tokens have been added in the vocabulary, make sure the associated word embeddings are fine-tuned or trained.
+Main: Msg: Starting intervention mode 1 on layer 0
+/home/hpate061/anaconda3/envs/Research/lib/python3.11/site-packages/tensorly/backend/pytorch_backend.py:39: UserWarning: To copy construct from a tensor, it is recommended to use sourceTensor.clone().detach() or sourceTensor.clone().detach().requires_grad_(True), rather than torch.tensor(sourceTensor).
+  return torch.tensor(
+Main: Msg: Edited and put modl on device in time 4 second
+  0%|                                                                                                                                                                                                           | 0/18812 [00:00<?, ?it/s]The attention mask and the pad token id were not set. As a consequence, you may observe unexpected behavior. Please pass your input's `attention_mask` to obtain reliable results.
+Setting `pad_token_id` to `eos_token_id`:50256 for open-end generation.
+  0%|                                                                                                                                                                                                           | 0/18812 [00:00<?, ?it/s]
+Traceback (most recent call last):
+  File "/data/home/hpate061/Laser_T/src/TASER_intervention_gptj_bbh_qa.py", line 276, in <module>
+    predictions = experiment.intervene(model=model,
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/home/hpate061/Laser_T/src/TASER_intervention_gptj_bbh_qa.py", line 133, in intervene
+    "total_logprob": log_prob_results.total_logprob,
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'ContextAnswerLogProb' object has no attribute 'total_logprob'

@@ -1,0 +1,43 @@
+
+Special tokens have been added in the vocabulary, make sure the associated word embeddings are fine-tuned or trained.
+Main: Msg: Starting intervention mode 1 on layer 0
+/home/hpate061/anaconda3/envs/Research/lib/python3.11/site-packages/tensorly/backend/pytorch_backend.py:39: UserWarning: To copy construct from a tensor, it is recommended to use sourceTensor.clone().detach() or sourceTensor.clone().detach().requires_grad_(True), rather than torch.tensor(sourceTensor).
+  return torch.tensor(
+  0%|                                                                                                                                                                                                                                                                                                                                                                                   | 0/74 [00:00<?, ?it/s]
+Traceback (most recent call last):
+  File "/home/hpate061/anaconda3/envs/Research/lib/python3.11/site-packages/transformers/tokenization_utils_base.py", line 748, in convert_to_tensors
+    tensor = as_tensor(value)
+             ^^^^^^^^^^^^^^^^
+  File "/home/hpate061/anaconda3/envs/Research/lib/python3.11/site-packages/transformers/tokenization_utils_base.py", line 720, in as_tensor
+    return torch.tensor(value)
+           ^^^^^^^^^^^^^^^^^^^
+ValueError: expected sequence of length 10 at dim 1 (got 14)
+The above exception was the direct cause of the following exception:
+Traceback (most recent call last):
+  File "/data/home/hpate061/Laser_T/src/TASER_intervention_gptj_bbh_qa.py", line 282, in <module>
+    predictions = experiment.intervene(model=model,
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/home/hpate061/Laser_T/src/TASER_intervention_gptj_bbh_qa.py", line 85, in intervene
+    inputs = tokenizer(prompts, return_tensors="pt").to(self.device)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hpate061/anaconda3/envs/Research/lib/python3.11/site-packages/transformers/tokenization_utils_base.py", line 2790, in __call__
+    encodings = self._call_one(text=text, text_pair=text_pair, **all_kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hpate061/anaconda3/envs/Research/lib/python3.11/site-packages/transformers/tokenization_utils_base.py", line 2876, in _call_one
+    return self.batch_encode_plus(
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hpate061/anaconda3/envs/Research/lib/python3.11/site-packages/transformers/tokenization_utils_base.py", line 3067, in batch_encode_plus
+    return self._batch_encode_plus(
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hpate061/anaconda3/envs/Research/lib/python3.11/site-packages/transformers/models/gpt2/tokenization_gpt2_fast.py", line 164, in _batch_encode_plus
+    return super()._batch_encode_plus(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hpate061/anaconda3/envs/Research/lib/python3.11/site-packages/transformers/tokenization_utils_fast.py", line 552, in _batch_encode_plus
+    return BatchEncoding(sanitized_tokens, sanitized_encodings, tensor_type=return_tensors)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hpate061/anaconda3/envs/Research/lib/python3.11/site-packages/transformers/tokenization_utils_base.py", line 223, in __init__
+    self.convert_to_tensors(tensor_type=tensor_type, prepend_batch_axis=prepend_batch_axis)
+  File "/home/hpate061/anaconda3/envs/Research/lib/python3.11/site-packages/transformers/tokenization_utils_base.py", line 764, in convert_to_tensors
+    raise ValueError(
+ValueError: Unable to create tensor, you should probably activate truncation and/or padding with 'padding=True' 'truncation=True' to have batched tensors with the same length. Perhaps your features (`input_ids` in this case) have excessive nesting (inputs type `list` where type `int` is expected).
+Main: Msg: Edited and put model on device in time 5 second

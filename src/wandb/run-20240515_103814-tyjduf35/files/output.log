@@ -1,0 +1,55 @@
+
+Special tokens have been added in the vocabulary, make sure the associated word embeddings are fine-tuned or trained.
+Main: Msg: Starting intervention mode 1 on layer 0
+/home/hpate061/anaconda3/envs/Research/lib/python3.11/site-packages/tensorly/backend/pytorch_backend.py:39: UserWarning: To copy construct from a tensor, it is recommended to use sourceTensor.clone().detach() or sourceTensor.clone().detach().requires_grad_(True), rather than torch.tensor(sourceTensor).
+  return torch.tensor(
+  0%|                                                                                                                                                                                                           | 0/18812 [00:00<?, ?it/s]Setting `pad_token_id` to `eos_token_id`:50256 for open-end generation.
+Main: Msg: Edited and put modl on device in time 5 second
+  0%|                                                                                                                                                                                                           | 0/18812 [00:00<?, ?it/s]
+Traceback (most recent call last):
+  File "/data/home/hpate061/Laser_T/src/TASER_intervention_gptj_bbh_qa.py", line 279, in <module>
+    predictions = experiment.intervene(model=model,
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/home/hpate061/Laser_T/src/TASER_intervention_gptj_bbh_qa.py", line 96, in intervene
+    generate_ids = model_edit.generate(**inputs,
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hpate061/anaconda3/envs/Research/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 115, in decorate_context
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hpate061/anaconda3/envs/Research/lib/python3.11/site-packages/transformers/generation/utils.py", line 1606, in generate
+    return self.greedy_search(
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/hpate061/anaconda3/envs/Research/lib/python3.11/site-packages/transformers/generation/utils.py", line 2454, in greedy_search
+    outputs = self(
+              ^^^^^
+  File "/home/hpate061/anaconda3/envs/Research/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1518, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hpate061/anaconda3/envs/Research/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1527, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hpate061/anaconda3/envs/Research/lib/python3.11/site-packages/transformers/models/gptj/modeling_gptj.py", line 855, in forward
+    transformer_outputs = self.transformer(
+                          ^^^^^^^^^^^^^^^^^
+  File "/home/hpate061/anaconda3/envs/Research/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1518, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hpate061/anaconda3/envs/Research/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1527, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hpate061/anaconda3/envs/Research/lib/python3.11/site-packages/transformers/models/gptj/modeling_gptj.py", line 635, in forward
+    inputs_embeds = self.wte(input_ids)
+                    ^^^^^^^^^^^^^^^^^^^
+  File "/home/hpate061/anaconda3/envs/Research/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1518, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hpate061/anaconda3/envs/Research/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1527, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hpate061/anaconda3/envs/Research/lib/python3.11/site-packages/torch/nn/modules/sparse.py", line 162, in forward
+    return F.embedding(
+           ^^^^^^^^^^^^
+  File "/home/hpate061/anaconda3/envs/Research/lib/python3.11/site-packages/torch/nn/functional.py", line 2233, in embedding
+    return torch.embedding(weight, input, padding_idx, scale_grad_by_freq, sparse)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: Expected tensor for argument #1 'indices' to have one of the following scalar types: Long, Int; but got torch.cuda.HalfTensor instead (while checking arguments for embedding)

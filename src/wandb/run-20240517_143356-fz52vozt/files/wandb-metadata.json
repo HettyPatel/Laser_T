@@ -1,0 +1,219 @@
+{
+    "os": "Linux-5.15.0-105-generic-x86_64-with-glibc2.31",
+    "python": "3.11.5",
+    "heartbeatAt": "2024-05-17T21:33:56.928689",
+    "startedAt": "2024-05-17T21:33:56.573053",
+    "docker": null,
+    "cuda": null,
+    "args": [
+        "--intervention_mode",
+        "1"
+    ],
+    "state": "running",
+    "program": "/data/home/hpate061/Laser_T/src/TASER_intervention_gptj_bbh_qa.py",
+    "codePathLocal": "TASER_intervention_gptj_bbh_qa.py",
+    "codePath": "src/TASER_intervention_gptj_bbh_qa.py",
+    "git": {
+        "remote": "https://github.com/HettyPatel/Laser_T.git",
+        "commit": "2c8dad381377cdf973947db69a4fa725318301e4"
+    },
+    "email": "Hetpatel500@gmail.com",
+    "root": "/data/home/hpate061/Laser_T",
+    "host": "coldbrew",
+    "username": "hpate061",
+    "executable": "/home/hpate061/anaconda3/envs/Research/bin/python",
+    "cpu_count": 16,
+    "cpu_count_logical": 32,
+    "cpu_freq": {
+        "current": 2.5350937500000015,
+        "min": 2200.0,
+        "max": 3900.0
+    },
+    "cpu_freq_per_core": [
+        {
+            "current": 2.2,
+            "min": 2200.0,
+            "max": 3900.0
+        },
+        {
+            "current": 3.997,
+            "min": 2200.0,
+            "max": 3900.0
+        },
+        {
+            "current": 2.2,
+            "min": 2200.0,
+            "max": 3900.0
+        },
+        {
+            "current": 2.2,
+            "min": 2200.0,
+            "max": 3900.0
+        },
+        {
+            "current": 3.997,
+            "min": 2200.0,
+            "max": 3900.0
+        },
+        {
+            "current": 2.2,
+            "min": 2200.0,
+            "max": 3900.0
+        },
+        {
+            "current": 2.2,
+            "min": 2200.0,
+            "max": 3900.0
+        },
+        {
+            "current": 3.997,
+            "min": 2200.0,
+            "max": 3900.0
+        },
+        {
+            "current": 3.997,
+            "min": 2200.0,
+            "max": 3900.0
+        },
+        {
+            "current": 2.2,
+            "min": 2200.0,
+            "max": 3900.0
+        },
+        {
+            "current": 3.997,
+            "min": 2200.0,
+            "max": 3900.0
+        },
+        {
+            "current": 2.2,
+            "min": 2200.0,
+            "max": 3900.0
+        },
+        {
+            "current": 2.2,
+            "min": 2200.0,
+            "max": 3900.0
+        },
+        {
+            "current": 2.2,
+            "min": 2200.0,
+            "max": 3900.0
+        },
+        {
+            "current": 2.2,
+            "min": 2200.0,
+            "max": 3900.0
+        },
+        {
+            "current": 2.4,
+            "min": 2200.0,
+            "max": 3900.0
+        },
+        {
+            "current": 2.2,
+            "min": 2200.0,
+            "max": 3900.0
+        },
+        {
+            "current": 2.2,
+            "min": 2200.0,
+            "max": 3900.0
+        },
+        {
+            "current": 3.995,
+            "min": 2200.0,
+            "max": 3900.0
+        },
+        {
+            "current": 2.2,
+            "min": 2200.0,
+            "max": 3900.0
+        },
+        {
+            "current": 2.2,
+            "min": 2200.0,
+            "max": 3900.0
+        },
+        {
+            "current": 2.2,
+            "min": 2200.0,
+            "max": 3900.0
+        },
+        {
+            "current": 2.2,
+            "min": 2200.0,
+            "max": 3900.0
+        },
+        {
+            "current": 2.2,
+            "min": 2200.0,
+            "max": 3900.0
+        },
+        {
+            "current": 2.2,
+            "min": 2200.0,
+            "max": 3900.0
+        },
+        {
+            "current": 2.2,
+            "min": 2200.0,
+            "max": 3900.0
+        },
+        {
+            "current": 2.2,
+            "min": 2200.0,
+            "max": 3900.0
+        },
+        {
+            "current": 2.2,
+            "min": 2200.0,
+            "max": 3900.0
+        },
+        {
+            "current": 2.15,
+            "min": 2200.0,
+            "max": 3900.0
+        },
+        {
+            "current": 2.2,
+            "min": 2200.0,
+            "max": 3900.0
+        },
+        {
+            "current": 2.2,
+            "min": 2200.0,
+            "max": 3900.0
+        },
+        {
+            "current": 2.2,
+            "min": 2200.0,
+            "max": 3900.0
+        }
+    ],
+    "disk": {
+        "/": {
+            "total": 915.3477020263672,
+            "used": 164.67182540893555
+        }
+    },
+    "gpu": "NVIDIA RTX A6000",
+    "gpu_count": 3,
+    "gpu_devices": [
+        {
+            "name": "NVIDIA RTX A6000",
+            "memory_total": 51527024640
+        },
+        {
+            "name": "NVIDIA RTX A6000",
+            "memory_total": 51527024640
+        },
+        {
+            "name": "NVIDIA RTX A6000",
+            "memory_total": 51527024640
+        }
+    ],
+    "memory": {
+        "total": 503.5174026489258
+    }
+}

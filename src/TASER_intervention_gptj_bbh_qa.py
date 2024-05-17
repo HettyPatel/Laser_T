@@ -345,7 +345,7 @@ if __name__ == '__main__':
                                             "Test Acc": results_dict["test_acc"],
                                             "Test Logloss": results_dict["test_logloss"]}, ignore_index=True)
             
-            results_df.to_csv(f"/home/hpate061/Laser_T/results/TASER_GPTJ_BBH_QA_RESULTS.csv", index=False)
+            results_df.to_csv(f"/home/hpate061/Laser_T/results/TASER_GPTJ_MODE:{intervention_mode}_BBH_QA_RESULTS.csv", index=False)
             
             print(f"Layer {layer}, Rank {rank}, {results.to_str()}")
             
