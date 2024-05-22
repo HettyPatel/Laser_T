@@ -155,12 +155,12 @@ class TaserGPTJExperiment:
             time_start = time.time()
             
             # Save predictions
-            save_pred_fname = f"{self.save_dir}/{llm_name}-predictions-{self.intervention_mode}.pkl"
+            save_pred_fname = f"{self.save_dir}/{llm_name}-predictions-{intervention_mode}.pkl"
             
             with open(save_pred_fname, "wb") as f:
                 pickle.dump(predictions, f)
                 
-            save_summary_fname = f"{self.save_dir}/{llm_name}-summary-{self.intervention_mode}.txt"
+            save_summary_fname = f"{self.save_dir}/{llm_name}-summary-{intervention_mode}.txt"
             
             results = self.dataset_metric.agg_to_dict()
             
