@@ -43,7 +43,7 @@ class Results:
 class TaserGPTJExperiment:
     
         def __init__(self, save_dir, logger):
-            self.save_sir = save_dir
+            self.save_dir = save_dir
             self.logger = logger
             
             #Object to measure progress
@@ -263,8 +263,15 @@ if __name__ == '__main__':
     experiment = TaserGPTJExperiment(save_dir=save_dir, logger=logger)
     
     
+    # =========================================================================================================
+    # Change here for the final version. 
+    
     dataset, _ = get_bb_dataset("qa_wikidata")
     
+    # Reduce the dataset size for initial experiments to save time (30% of the dataset)
+    dataset = dataset[:int(0.3 * len(dataset))]
+    
+    # =========================================================================================================
     
     # TODO: ADD A BASELINE CALCULATION WITHOUT THE EDIT STORE LATER IN RESULTS.
     #baseline experiment
