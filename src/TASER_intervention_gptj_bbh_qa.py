@@ -306,12 +306,25 @@ if __name__ == '__main__':
     base_test_acc = base_results_dict["test_acc"]
     base_test_logloss = base_results_dict["test_logloss"]
     
-    results_df = results_df.append({"Layer": "Baseline",
-                                    "Rank": "Baseline",
-                                    "Val Acc": base_val_acc,
-                                    "Val Logloss": base_val_logloss,
-                                    "Test Acc": base_test_acc,
-                                    "Test Logloss": base_test_logloss}, ignore_index=True)
+    try:
+        results_df
+    except NameError:
+        results_df = pd.DataFrame(columns=["Layer", "Rank", "Val Acc", "Val Logloss", "Test Acc", "Test Logloss"])
+
+    # Create a DataFrame with the new results
+    new_data = pd.DataFrame([{
+        "Layer": "Baseline",
+        "Rank": "Baseline",
+        "Val Acc": base_val_acc,
+        "Val Logloss": base_val_logloss,
+        "Test Acc": base_test_acc,
+        "Test Logloss": base_test_logloss
+    }])
+
+    # Concatenate the new data to the results DataFrame
+    results_df = pd.concat([results_df, new_data], ignore_index=True)
+    
+    
     
     print(f"Baseline, {base_results.to_str()}")
     
@@ -345,12 +358,25 @@ if __name__ == '__main__':
                                  results_dict["test_acc"],
                                  results_dict["test_logloss"])
             
-            results_df = results_df.append({"Layer": layer,
-                                            "Rank": rank,
-                                            "Val Acc": results_dict["val_acc"],
-                                            "Val Logloss": results_dict["val_logloss"],
-                                            "Test Acc": results_dict["test_acc"],
-                                            "Test Logloss": results_dict["test_logloss"]}, ignore_index=True)
+            try:
+                results_df
+            except NameError:
+                results_df = pd.DataFrame(columns=["Layer", "Rank", "Val Acc", "Val Logloss", "Test Acc", "Test Logloss"])
+                
+            # Create a DataFrame with the new results
+            new_data = pd.DataFrame([{
+                "Layer": layer,
+                "Rank": rank,
+                "Val Acc": results_dict["val_acc"],
+                "Val Logloss": results_dict["val_logloss"],
+                "Test Acc": results_dict["test_acc"],
+                "Test Logloss": results_dict["test_logloss"]
+            }])
+            
+            # Concatenate the new data to the results DataFrame
+            results_df = pd.concat([results_df, new_data], ignore_index=True)
+            
+            # Save the results to a CSV file
             
             results_df.to_csv(f"/home/hpate061/Laser_T/results/TASER_GPTJ_MODE:{intervention_mode}_BBH_QA_RESULTS.csv", index=False)
             
