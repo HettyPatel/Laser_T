@@ -294,8 +294,8 @@ if __name__ == '__main__':
     
     base_results_dict = base_results.to_dict()
     
-    wandb_table.add_data("Baseline",
-                            "Baseline",
+    wandb_table.add_data(-1,
+                            -1,
                             base_results_dict["val_acc"],
                             base_results_dict["val_logloss"],
                             base_results_dict["test_acc"],
@@ -313,8 +313,8 @@ if __name__ == '__main__':
 
     # Create a DataFrame with the new results
     new_data = pd.DataFrame([{
-        "Layer": "Baseline",
-        "Rank": "Baseline",
+        "Layer": -1,
+        "Rank": -1,
         "Val Acc": base_val_acc,
         "Val Logloss": base_val_logloss,
         "Test Acc": base_test_acc,
