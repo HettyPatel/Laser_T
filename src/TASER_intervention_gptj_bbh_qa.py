@@ -97,6 +97,8 @@ class TaserGPTJExperiment:
                 prompts = [entry[0].strip() for entry in batch]
                 answers = [entry[1].strip() for entry in batch]
                 inputs = tokenizer(prompts, return_tensors="pt", padding=True).to(self.device)
+                inputs = {k: v.to(torch.float16) for k, v in inputs.items()}
+
                 input_and_answers = tokenizer([f"{p} {a}" for p, a in zip(prompts, answers)], return_tensors="pt", padding=True).to(self.device)
                 
                 with torch.no_grad():
