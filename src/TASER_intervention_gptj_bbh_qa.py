@@ -280,7 +280,7 @@ if __name__ == '__main__':
     tokenizer = AutoTokenizer.from_pretrained(llm_path)
     model = GPTJForCausalLM.from_pretrained(llm_path,
                                             revision="float16",
-                                            torch_dtype=torch.half,
+                                            torch_dtype=torch.float16,
                                             )
     
     predictions = experiment.intervene(model=model,
@@ -336,7 +336,7 @@ if __name__ == '__main__':
             tokenizer = AutoTokenizer.from_pretrained(llm_path)
             model = GPTJForCausalLM.from_pretrained(llm_path,
                                                         revision="float16",
-                                                        torch_dtype=torch.half,
+                                                        torch_dtype=torch.float16,
                                                         )
             
             
