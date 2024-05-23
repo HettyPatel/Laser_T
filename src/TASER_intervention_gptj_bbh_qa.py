@@ -97,19 +97,24 @@ class TaserGPTJExperiment:
                 prompts = [entry[0].strip() for entry in batch]
                 answers = [entry[1].strip() for entry in batch]
                 inputs = tokenizer(prompts, return_tensors="pt", padding=True).to(self.device)
-                inputs = {k: v.to(torch.float16) for k, v in inputs.items()}
-
                 input_and_answers = tokenizer([f"{p} {a}" for p, a in zip(prompts, answers)], return_tensors="pt", padding=True).to(self.device)
                 
+                inputs["input_ids"] = inputs["input_ids"].to(torch.long)
+                input_and_answers["input_ids"] = input_and_answers["input_ids"].to(torch.long)
+                
+                
+                inputs = {k: (v.to(torch.float16) if k != "input_ids" else v) for k, v in inputs.items()}
+                input_and_answers = {k: (v.to(torch.float16) if k != "input_ids" else v) for k, v in input_and_answers.items()}
+                
                 with torch.no_grad():
-                    generate_ids = model_edit.generate(inputs.input_ids, max_new_tokens=10, min_new_tokens=1)
+                    generate_ids = model_edit.generate(inputs["input_ids"], max_new_tokens=10, min_new_tokens=1)
                     generations = tokenizer.batch_decode(generate_ids, skip_special_tokens=True, clean_up_tokenization_spaces=False)
                     
-                    results = model_edit(input_and_answers.input_ids)
+                    results = model_edit(input_and_answers['input_ids'])
                     logits = results.logits  # Batch size x (Question + Answer length) x vocab
                     log_probs = torch.nn.functional.log_softmax(logits, dim=2)
                     
-                    for j, (prompt, answer, generation, input_and_answer) in enumerate(zip(prompts, answers, generations, input_and_answers.input_ids)):
+                    for j, (prompt, answer, generation, input_and_answer) in enumerate(zip(prompts, answers, generations, input_and_answers["input_ids"])):
                         log_prob = log_probs[j]
                         
                         log_prob_results = self.metrics.answer_log_prob(log_prob=log_prob,
@@ -271,7 +276,7 @@ if __name__ == '__main__':
     dataset, _ = get_bb_dataset("qa_wikidata")
     
     # Reduce the dataset size for initial experiments to save time (30% of the dataset)
-    dataset = dataset[:int(0.3 * len(dataset))]
+    #dataset = dataset[:int(0.3 * len(dataset))]
     
     # =========================================================================================================
     
@@ -284,6 +289,8 @@ if __name__ == '__main__':
                                             revision="float16",
                                             torch_dtype=torch.float16,
                                             )
+    # Saving the original mode state to reset the model after each intervention
+    original_model_state = model.state_dict()
     
     predictions = experiment.intervene(model=model,
                                         tokenizer=tokenizer,
@@ -336,10 +343,14 @@ if __name__ == '__main__':
             llm_name = "GPTJ"
             llm_path = "/data/hpate061/Models/gpt-j-6b"
             tokenizer = AutoTokenizer.from_pretrained(llm_path)
-            model = GPTJForCausalLM.from_pretrained(llm_path,
-                                                        revision="float16",
-                                                        torch_dtype=torch.float16,
-                                                        )
+            
+            ## Reset the model to the original state
+            model.load_state_dict(original_model_state)
+            
+            # model = GPTJForCausalLM.from_pretrained(llm_path,
+            #                                             revision="float16",
+            #                                             torch_dtype=torch.float16,
+            #                                             )
             
             
             predictions = experiment.intervene(model=model,
