@@ -279,8 +279,8 @@ if __name__ == '__main__':
     llm_path = "/data/hpate061/Models/gpt-j-6b"
     tokenizer = AutoTokenizer.from_pretrained(llm_path)
     model = GPTJForCausalLM.from_pretrained(llm_path,
-                                            #revision="float16",
-                                            #torch_dtype=torch.float16,
+                                            revision="float16",
+                                            torch_dtype=torch.half,
                                             )
     
     predictions = experiment.intervene(model=model,
@@ -335,8 +335,8 @@ if __name__ == '__main__':
             llm_path = "/data/hpate061/Models/gpt-j-6b"
             tokenizer = AutoTokenizer.from_pretrained(llm_path)
             model = GPTJForCausalLM.from_pretrained(llm_path,
-                                                        #revision="float16",
-                                                        #torch_dtype=torch.float16,
+                                                        revision="float16",
+                                                        torch_dtype=torch.half,
                                                         )
             
             
@@ -351,7 +351,7 @@ if __name__ == '__main__':
             
             results_dict = results.to_dict()
             
-            wandb_table.add_data(layer,
+            wandb_table.add_data(int(layer),
                                  rank,
                                  results_dict["val_acc"],
                                  results_dict["val_logloss"],
@@ -365,7 +365,7 @@ if __name__ == '__main__':
                 
             # Create a DataFrame with the new results
             new_data = pd.DataFrame([{
-                "Layer": layer,
+                "Layer": int(layer),
                 "Rank": rank,
                 "Val Acc": results_dict["val_acc"],
                 "Val Logloss": results_dict["val_logloss"],
