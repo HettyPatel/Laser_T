@@ -276,7 +276,7 @@ if __name__ == '__main__':
     dataset, _ = get_bb_dataset("qa_wikidata")
     
     # Reduce the dataset size for initial experiments to save time (30% of the dataset)
-    #dataset = dataset[:int(0.3 * len(dataset))]
+    dataset = dataset[:int(0.3 * len(dataset))]
     
     # =========================================================================================================
     
@@ -289,8 +289,12 @@ if __name__ == '__main__':
                                             revision="float16",
                                             torch_dtype=torch.float16,
                                             )
-    # Saving the original mode state to reset the model after each intervention
-    original_model_state = model.state_dict()
+    # saving state dict to disk to speed up the process
+    #torch.save(model.state_dict(), 'model_state_dict.pth')
+
+    
+    # save model state dict to a different gpu
+    
     
     predictions = experiment.intervene(model=model,
                                         tokenizer=tokenizer,
@@ -339,18 +343,22 @@ if __name__ == '__main__':
     
     for layer in layers:
         for rank in ranks:
+            torch.cuda.empty_cache()
             
             llm_name = "GPTJ"
             llm_path = "/data/hpate061/Models/gpt-j-6b"
             tokenizer = AutoTokenizer.from_pretrained(llm_path)
             
-            ## Reset the model to the original state
-            model.load_state_dict(original_model_state)
-            
+            ## Reset the model to the original state by loading in a state dict from disk. 
             # model = GPTJForCausalLM.from_pretrained(llm_path,
-            #                                             revision="float16",
-            #                                             torch_dtype=torch.float16,
-            #                                             )
+            #                                         revision="float16",
+            #                                         torch_dtype=torch.float16,
+            #                                         state_dict=torch.load('model_state_dict.pth'))
+            
+            model = GPTJForCausalLM.from_pretrained(llm_path,
+                                                        revision="float16",
+                                                        torch_dtype=torch.float16,
+                                                        )
             
             
             predictions = experiment.intervene(model=model,
