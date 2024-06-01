@@ -229,8 +229,9 @@ if __name__ == '__main__':
     args = parser.parse_args()
     
     # For all layers and early, middle, last
-    layers = range(0,28)
-    layers = [str(layer) for layer in layers]
+    #layers = range(1,28)
+    #layers = [str(layer) for layer in layers]
+    layers = []
     layers.append("early")
     layers.append("middle")
     layers.append("last")
@@ -242,7 +243,7 @@ if __name__ == '__main__':
     
     #ranks 
     start_rank = 1
-    end_rank = 100
+    end_rank = 90
     rank_step = 1
     ranks = range(start_rank, end_rank + 1, rank_step)
     llm_name = "GPTJ"
@@ -276,7 +277,7 @@ if __name__ == '__main__':
     dataset, _ = get_bb_dataset("qa_wikidata")
     
     # Reduce the dataset size for initial experiments to save time (30% of the dataset)
-    dataset = dataset[:int(0.3 * len(dataset))]
+    #dataset = dataset[:int(0.3 * len(dataset))]
     
     # =========================================================================================================
     
@@ -289,12 +290,11 @@ if __name__ == '__main__':
                                             revision="float16",
                                             torch_dtype=torch.float16,
                                             )
-    # saving state dict to disk to speed up the process
-    #torch.save(model.state_dict(), 'model_state_dict.pth')
+    original_state_dict = model.state_dict()
+    model.to("cuda")
 
-    
-    # save model state dict to a different gpu
-    
+    # saving state dict to disk to speed up the process
+    #torch.save(model.state_dict(), 'model_state_dict.pth')    
     
     predictions = experiment.intervene(model=model,
                                         tokenizer=tokenizer,
@@ -340,45 +340,36 @@ if __name__ == '__main__':
     
     
     print(f"Baseline, {base_results.to_str()}")
-    
-    for layer in layers:
+    #full model intervention
+    if intervention_mode == 1 or intervention_mode == 4:
+        
         for rank in ranks:
-            torch.cuda.empty_cache()
-            
             llm_name = "GPTJ"
             llm_path = "/data/hpate061/Models/gpt-j-6b"
             tokenizer = AutoTokenizer.from_pretrained(llm_path)
             
-            ## Reset the model to the original state by loading in a state dict from disk. 
-            # model = GPTJForCausalLM.from_pretrained(llm_path,
-            #                                         revision="float16",
-            #                                         torch_dtype=torch.float16,
-            #                                         state_dict=torch.load('model_state_dict.pth'))
-            
-            model = GPTJForCausalLM.from_pretrained(llm_path,
-                                                        revision="float16",
-                                                        torch_dtype=torch.float16,
-                                                        )
-            
+            ## Reset the model to the original state.
+            model.load_state_dict(original_state_dict)
+            model.to("cuda")
             
             predictions = experiment.intervene(model=model,
                                                 tokenizer=tokenizer,
                                                 dataset=dataset,
                                                 intervention_mode=args.intervention_mode,
-                                                layer=layer,
+                                                layer=None,
                                                 rank=rank, decomposition_type=decomposition_type)
             
             results = experiment.validate(predictions)
             
             results_dict = results.to_dict()
             
-            wandb_table.add_data(int(layer),
-                                 rank,
-                                 results_dict["val_acc"],
-                                 results_dict["val_logloss"],
-                                 results_dict["test_acc"],
-                                 results_dict["test_logloss"])
-            
+            wandb_table.add_data(-1,
+                                    rank,
+                                    results_dict["val_acc"],
+                                    results_dict["val_logloss"],
+                                    results_dict["test_acc"],
+                                    results_dict["test_logloss"])
+        
             try:
                 results_df
             except NameError:
@@ -386,7 +377,7 @@ if __name__ == '__main__':
                 
             # Create a DataFrame with the new results
             new_data = pd.DataFrame([{
-                "Layer": int(layer),
+                "Layer": -1,
                 "Rank": rank,
                 "Val Acc": results_dict["val_acc"],
                 "Val Logloss": results_dict["val_logloss"],
@@ -396,17 +387,71 @@ if __name__ == '__main__':
             
             # Concatenate the new data to the results DataFrame
             results_df = pd.concat([results_df, new_data], ignore_index=True)
-            
-            # Save the results to a CSV file
-            
             results_df.to_csv(f"/home/hpate061/Laser_T/results/TASER_GPTJ_MODE:{intervention_mode}_BBH_QA_RESULTS.csv", index=False)
             
-            print(f"Layer {layer}, Rank {rank}, {results.to_str()}")
+            print(f"Rank {rank}, {results.to_str()}")
             
-    wandb.log({"intervention_results": wandb_table})
-    wandb.finish()
-    
-    logger.log("Experiment Complete")
+        wandb.log({"intervention_results": wandb_table})
+        
+    else:
+        
+        for layer in layers:
+            for rank in ranks:
+                torch.cuda.empty_cache()
+                
+                llm_name = "GPTJ"
+                llm_path = "/data/hpate061/Models/gpt-j-6b"
+                tokenizer = AutoTokenizer.from_pretrained(llm_path)
+                
+                model.load_state_dict(original_state_dict)
+                model.to("cuda")
+                
+                predictions = experiment.intervene(model=model,
+                                                    tokenizer=tokenizer,
+                                                    dataset=dataset,
+                                                    intervention_mode=args.intervention_mode,
+                                                    layer=layer,
+                                                    rank=rank, decomposition_type=decomposition_type)
+                
+                results = experiment.validate(predictions)
+                
+                results_dict = results.to_dict()
+                
+                wandb_table.add_data(-1,
+                                    rank,
+                                    results_dict["val_acc"],
+                                    results_dict["val_logloss"],
+                                    results_dict["test_acc"],
+                                    results_dict["test_logloss"])
+                
+                try:
+                    results_df
+                except NameError:
+                    results_df = pd.DataFrame(columns=["Layer", "Rank", "Val Acc", "Val Logloss", "Test Acc", "Test Logloss"])
+                    
+                # Create a DataFrame with the new results
+                new_data = pd.DataFrame([{
+                    "Layer": -1,
+                    "Rank": rank,
+                    "Val Acc": results_dict["val_acc"],
+                    "Val Logloss": results_dict["val_logloss"],
+                    "Test Acc": results_dict["test_acc"],
+                    "Test Logloss": results_dict["test_logloss"]
+                }])
+                
+                # Concatenate the new data to the results DataFrame
+                results_df = pd.concat([results_df, new_data], ignore_index=True)
+                
+                # Save the results to a CSV file
+                
+                results_df.to_csv(f"/home/hpate061/Laser_T/results/TASER_GPTJ_MODE:{intervention_mode}_BBH_QA_RESULTS.csv", index=False)
+                
+                print(f"Layer {layer}, Rank {rank}, {results.to_str()}")
+                
+        wandb.log({"intervention_results": wandb_table})
+        wandb.finish()
+        
+        logger.log("Experiment Complete")
             
             
     
