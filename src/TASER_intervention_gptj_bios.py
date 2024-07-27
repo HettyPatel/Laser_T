@@ -268,12 +268,12 @@ if __name__ == '__main__':
     args = parser.parse_args()
     
     # For all layers and early, middle, last
-    layers = range(24,28)
-    layers = [str(layer) for layer in layers]
-    # layers = []
-    # layers.append("early")
-    # layers.append("middle")
-    # layers.append("last")
+    #layers = range(24,28)
+    # = [str(layer) for layer in layers]
+    layers = []
+    layers.append("early")
+    layers.append("middle")
+    layers.append("last")
     
     
     
@@ -291,7 +291,7 @@ if __name__ == '__main__':
     # <-------------------------------------------- LOGGING -------------------------------------------->
     #==========================================================================================================#
     # Wandb init
-    wandb.init(project="TASER", name=f"GPTJ BB QA Wikidata {args.intervention_mode}, {decomposition_type} Decomposition")
+    wandb.init(project="TASER", name=f"GPTJ BIOS {args.intervention_mode}, {decomposition_type} Decomposition")
     wandb_table = wandb.Table(columns=["Layer", "Rank", "Val Acc", "Val Logloss", "Test Acc", "Test Logloss"])
     #dataframe to also save results
     results_df = pd.DataFrame(columns=["Layer", "Rank", "Val Acc", "Val Logloss", "Test Acc", "Test Logloss"])
@@ -300,7 +300,7 @@ if __name__ == '__main__':
     
     home_dir = args.home_dir
     intervention_mode = args.intervention_mode
-    save_dir = f"{home_dir}/{intervention_mode}/{llm_name}_intervention_results"
+    save_dir = f"{home_dir}/{intervention_mode}/{llm_name}_BIOS_intervention_results"
     
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
@@ -421,7 +421,7 @@ if __name__ == '__main__':
             
             # Concatenate the new data to the results DataFrame
             results_df = pd.concat([results_df, new_data], ignore_index=True)
-            results_df.to_csv(f"/home/hpate061/Laser_T/results/TASER_GPTJ_MODE:{intervention_mode}_BBH_QA_RESULTS.csv", index=False)
+            results_df.to_csv(f"/home/hpate061/Laser_T/results/TASER_GPTJ_MODE:{intervention_mode}_BIOS_PROF_RESULTS.csv", index=False)
             
             print(f"Rank {rank}, {results.to_str()}")
             
@@ -450,7 +450,7 @@ if __name__ == '__main__':
                 
                 results_dict = results.to_dict()
                 
-                wandb_table.add_data(int(layer),
+                wandb_table.add_data(-1,
                                     rank,
                                     results_dict["val_acc"],
                                     results_dict["val_logloss"],
@@ -464,7 +464,7 @@ if __name__ == '__main__':
                     
                 # Create a DataFrame with the new results
                 new_data = pd.DataFrame([{
-                    "Layer": int(layer),
+                    "Layer": -1,
                     "Rank": rank,
                     "Val Acc": results_dict["val_acc"],
                     "Val Logloss": results_dict["val_logloss"],

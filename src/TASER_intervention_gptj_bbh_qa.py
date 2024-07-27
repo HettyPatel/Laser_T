@@ -204,12 +204,13 @@ if __name__ == '__main__':
     args = parser.parse_args()
     
     
-    layers = range(24,28)
-    layers = [str(layer) for layer in layers]
+    #layers = range(24,28)
+    #layers = [str(layer) for layer in layers]
     # For all layers and early, middle, last
-    #layers = []
-    #layers.append("middle")
-    #layers.append("last")
+    layers = []
+    layers.append("early")
+    layers.append("middle")
+    layers.append("last")
     
     # Decomposition type
     decomposition_type = args.decomposition_type
@@ -346,7 +347,7 @@ if __name__ == '__main__':
                 
                 results_dict = results.to_dict()
                 
-                wandb_table.add_data(int(layer),
+                wandb_table.add_data(-1,
                                      rank,
                                      results_dict["val_acc"],
                                      results_dict["val_logloss"],
@@ -354,7 +355,7 @@ if __name__ == '__main__':
                                      results_dict["test_logloss"])
                 
                 new_data = pd.DataFrame([{
-                    "Layer": layer,
+                    "Layer": -1,
                     "Rank": rank,
                     "Val Acc": results_dict["val_acc"],
                     "Val Logloss": results_dict["val_logloss"],
