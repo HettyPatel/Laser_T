@@ -6,8 +6,7 @@ import argparse
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
-from transformers import AutoTokenizer
-from transformers import GPTJForCausalLM
+from transformers import AutoTokenizer, GPTJForCausalLM
 
 from dataset_utils.hotpot import Hotpot
 from taser.gptj_taser import GPTJTaser
@@ -56,7 +55,7 @@ class TASERGPTJExperiment:
         
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         
-    def intervene(self, model, tokenizer, dataset, intervention_mode, layer, rank, beam, decomposition_type='cp', batch_size=256):
+    def intervene(self, model, tokenizer, dataset, intervention_mode, layer, rank, beam, decomposition_type='cp', batch_size=64):
         dataset_size = len(dataset)
         self.logger.log(f"starting a new intervention experiment with {dataset_size} samples")
         
@@ -77,7 +76,7 @@ class TASERGPTJExperiment:
         
         if tokenizer.pad_token is None:
             tokenizer.pad_token = tokenizer.eos_token
-            tokenizer.padding_side = 'left'
+        tokenizer.padding_side = 'left'
         
         for i in tqdm(range(0, dataset_size, batch_size)):
             batch = dataset[i:i+batch_size]
@@ -91,12 +90,14 @@ class TASERGPTJExperiment:
             with torch.no_grad():
                 if beam > 1:
                     generate_ids = model_edit.generate(inputs.input_ids,
+                                                       attention_mask=inputs.attention_mask,
                                                        max_new_tokens=15,
                                                        min_new_tokens=1,
                                                        num_beams=beam,
                                                        do_sample=False,)
                 else:
                     generate_ids = model_edit.generate(inputs.input_ids,
+                                                       attention_mask=inputs.attention_mask,
                                                        max_new_tokens=15,
                                                        min_new_tokens=1)
                     
@@ -104,7 +105,7 @@ class TASERGPTJExperiment:
                                                      skip_special_tokens=True,
                                                      clean_up_tokenization_spaces=False)
                 
-                results = model_edit(input_and_answers.input_ids)
+                results = model_edit(input_and_answers.input_ids, attention_mask=input_and_answers.attention_mask)
                 logits = results.logits
                 log_probs = torch.nn.functional.log_softmax(logits, dim=-1)
                 
@@ -167,20 +168,20 @@ class TASERGPTJExperiment:
         test_acc, test_log_loss = TASERGPTJExperiment.get_acc_log_loss(test_predictions)
         
         return Results(val_acc=val_acc,
-                       val_log_loss=val_log_loss,
+                       val_logloss=val_log_loss,
                        test_acc=test_acc,
-                       test_log_loss=test_log_loss)
+                       test_logloss=test_log_loss)
     
 
 if __name__ == '__main__':
     
     intervention_mode = 5
-    start_rank = 1
+    start_rank = 50
     end_rank = 80
-    rank_step = 1 
+    rank_step = 2 
     ranks = range(start_rank, end_rank, rank_step)
     
-    layers = range(24, 28)
+    layers = range(25, 28)
     layers = [str(layer) for layer in layers]
     
     results_df = pd.DataFrame(columns=["Layer", "Rank", "Val Acc", "Val Logloss", "Test Acc", "Test Logloss"])
@@ -188,6 +189,12 @@ if __name__ == '__main__':
     llm_name = "GPTJ"
     llm_path = "/data/hpate061/Models/gpt-j-6b"
     tokenizer = AutoTokenizer.from_pretrained(llm_path)
+
+    # Set pad_token_id to eos_token_id for tokenizer
+    if tokenizer.pad_token is None:
+        tokenizer.pad_token = tokenizer.eos_token
+    tokenizer.padding_side = 'left'
+
     model = GPTJForCausalLM.from_pretrained(llm_path,
                                             revision="float16",
                                             torch_dtype=torch.float16)

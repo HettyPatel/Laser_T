@@ -161,6 +161,7 @@ class RobertaTaser(AbstractTaser):
                 model.roberta.encoder.layer[i].output.dense.weight = torch.nn.Parameter(reconstructed_tensor[2*i+1])
                 
         elif intervention_mode == 5:
+            layer = int(layer)
             # fc in out layer at a time
             stacked_tensor = RobertaTaser.get_stacked_tensor(model, intervention_mode, layer)
             reconstructed_tensor = RobertaTaser.return_reconstructed_tensor(tensor=stacked_tensor, decomposition_type=decomposition_type, rank=rank)
@@ -208,8 +209,9 @@ class RobertaTaser(AbstractTaser):
         
         # Need to update to do different ranks for each mode if using tucker: 
         elif decomposition_type == 'tucker':
+            print("Tucker decomposition")
             tensorly_tensor = tl.tensor(tensor, device='cuda')
-            tucker_tensor = tucker(tensorly_tensor, rank=rank, init='random')
+            tucker_tensor = tucker(tensorly_tensor, rank=[2, rank, rank], init='random')
             reconstructed_tensor = tl.tucker_to_tensor(tucker_tensor)
             
         else:
