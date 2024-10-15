@@ -174,7 +174,6 @@ if __name__ == '__main__':
     
     layers = range(27,28)
     layers = [str(layer) for layer in layers]
-    # For all layers and early, middle, last
 
     
     # Decomposition type
@@ -203,8 +202,6 @@ if __name__ == '__main__':
     
     dataset, _ = get_bb_dataset("qa_wikidata")
     
-    # Reduce the dataset size for initial experiments to save time (30% of the dataset)
-    # dataset = dataset[:int(0.3 * len(dataset))]
     
     # Baseline experiment
     llm_name = "GPTJ"

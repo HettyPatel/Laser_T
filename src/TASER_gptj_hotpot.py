@@ -187,8 +187,10 @@ if __name__ == '__main__':
     results_df = pd.DataFrame(columns=["Layer", "Rank", "Val Acc", "Val Logloss", "Test Acc", "Test Logloss"])
 
     llm_name = "GPTJ"
-    llm_path = "/data/hpate061/Models/gpt-j-6b"
+    llm_path = "/path/to/GPTJ"
     tokenizer = AutoTokenizer.from_pretrained(llm_path)
+
+    llama_tokenizer_path = "/path/to/Models/Llama-2-7b-hf"
 
     # Set pad_token_id to eos_token_id for tokenizer
     if tokenizer.pad_token is None:
@@ -215,7 +217,7 @@ if __name__ == '__main__':
     logger.log(f"Starting intervention experiment with {llm_name}")
     logger.log("="*50)
     
-    llama_tokenizer_path = "/data/hpate061/Models/Llama-2-7b-hf"
+    
     
     dataset_util = Hotpot(llama_tokenizer_path=llama_tokenizer_path)
     dataset = dataset_util.get_dataset(logger)

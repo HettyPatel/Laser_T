@@ -220,6 +220,7 @@ if __name__ == "__main__":
     end_rank = 80
     rank_step = 1
     ranks = range(start_rank, end_rank, rank_step)
+    path_to_llm = 'path/to/llm'
 
     layers = range(27, 32)
     layers = [str(layer) for layer in layers]
@@ -227,7 +228,7 @@ if __name__ == "__main__":
     results_df = pd.DataFrame(columns=['Layer', 'Rank', 'Val Acc', 'Val Logloss', 'Test Acc', 'Test Logloss'])
 
     llm_name = "Llama2-7G"
-    llm_path = '/data/hpate061/Models/Llama-2-7b-hf'
+    llm_path = path_to_llm
     tokenizer = LlamaTokenizerFast.from_pretrained(llm_path)
     model = LlamaForCausalLM.from_pretrained(llm_path)
 

@@ -247,7 +247,10 @@ if __name__ == '__main__':
     #==========================================================================================================#
     # <-------------------------------------------- LOGGING -------------------------------------------->
     #==========================================================================================================#
-    # Wandb init
+    llm_name = "GPTJ"
+    path_to_llm = 'path/to/llm'
+
+
     #dataframe to also save results
     results_df = pd.DataFrame(columns=["Layer", "Rank", "Val Acc", "Val Logloss", "Test Acc", "Test Logloss"])
     
@@ -274,8 +277,8 @@ if __name__ == '__main__':
     
     # MARK: BASELINE Experiment
     
-    llm_name = "GPTJ"
-    llm_path = "/data/hpate061/Models/gpt-j-6b"
+    
+    llm_path = path_to_llm
     tokenizer = AutoTokenizer.from_pretrained(llm_path)
     model = GPTJForCausalLM.from_pretrained(llm_path,
                                             revision="float16",
@@ -327,7 +330,7 @@ if __name__ == '__main__':
         
         for rank in ranks:
             llm_name = "GPTJ"
-            llm_path = "/data/hpate061/Models/gpt-j-6b"
+            llm_path = path_to_llm
             tokenizer = AutoTokenizer.from_pretrained(llm_path)
             
             ## Reset the model to the original state.
@@ -374,7 +377,7 @@ if __name__ == '__main__':
             for rank in ranks:
                 
                 llm_name = "GPTJ"
-                llm_path = "/data/hpate061/Models/gpt-j-6b"
+                llm_path = path_to_llm
                 tokenizer = AutoTokenizer.from_pretrained(llm_path)
                 
                 model.load_state_dict(original_state_dict)
