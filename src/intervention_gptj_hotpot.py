@@ -170,12 +170,12 @@ if __name__ == '__main__':
     # Step 1: Command line argument
     parser = argparse.ArgumentParser(description='Process Arguments for experiments with GPTJ LLM on Hotpot')
 
-    parser.add_argument('--rate', type=float, default=1, help='rates for intervention')
-    parser.add_argument('--dtpts', type=int, default=22000, help='# samples per instruction')
+    #parser.add_argument('--rate', type=float, default=1, help='rates for intervention')
+    #parser.add_argument('--dtpts', type=int, default=22000, help='# samples per instruction')
     parser.add_argument('--beam', type=int, default=1, help='beam size for generation')
     parser.add_argument('--batch_size', type=int, default=256, help='batch size for evaluation')
-    parser.add_argument('--max_len', type=int, default=15, help='maximum length for generation')
-    parser.add_argument('--k', type=int, default=10, help='top k for evaluation')
+    #parser.add_argument('--max_len', type=int, default=15, help='maximum length for generation')
+    #parser.add_argument('--k', type=int, default=10, help='top k for evaluation')
     parser.add_argument('--intervention', type=str, default="rank-reduction",
                         choices=['dropout', 'rank-reduction'], help="what type of intervention to perform")
     parser.add_argument('--lname', type=str, default="None",

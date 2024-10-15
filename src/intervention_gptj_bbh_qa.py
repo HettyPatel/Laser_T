@@ -93,6 +93,8 @@ class GPTJExperiment:
 
             prompt = dataset[i][0].strip()
             answer = dataset[i][1].strip()
+
+            
             inputs = tokenizer(prompt, return_tensors="pt").to(self.device)
             input_and_answer = tokenizer(prompt + " " + answer, return_tensors="pt").to(self.device)
 

@@ -239,6 +239,7 @@ if __name__ == '__main__':
     llm_name = "GPTJ"
     llm_path = "EleutherAI/gpt-j-6B"
     tokenizer = AutoTokenizer.from_pretrained(llm_path)
+    
     model = GPTJForCausalLM.from_pretrained(
         llm_path,
         revision="float16",
