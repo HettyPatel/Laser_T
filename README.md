@@ -11,7 +11,7 @@ This repository contains code adapted from the original work on **Layer-Selectiv
 
 ## Additions
 
-TASER introduces a way compressing weight matrices in a transformer architecture :
+TASER introduces new ways of compressing weight matrices in a transformer architecture :
 
 - **Mode 1**: QKVO interventions across the entire model.
 - **Mode 2**: QKVO interventions layer by layer.
