@@ -79,7 +79,7 @@ class TaserGPTJExperiment:
             tokenizer.pad_token = tokenizer.eos_token
             tokenizer.padding_side = 'left'
 
-        batch_size = 200
+        batch_size = 64
 
         for i in tqdm(range(0, dataset_size, batch_size)):
             batch_end = min(i + batch_size, dataset_size)
@@ -139,34 +139,9 @@ class TaserGPTJExperiment:
                     self.dataset_metric.print()
                     self.progress.print(ex_done=i, ex_left=(dataset_size - i))
                     
-        self.terminate_and_save(predictions)
         
         return predictions
     
-    def terminate_and_save(self, predictions):
-        self.logger.log("Saving results. Final Performance is given below: ")
-        self.dataset_metric.terminate()
-        self.dataset_metric.print()
-        
-        time_start = time.time()
-        
-        # Save predictions
-        save_pred_fname = f"{self.save_dir}/{llm_name}-predictions-{intervention_mode}.pkl"
-        
-        with open(save_pred_fname, "wb") as f:
-            pickle.dump(predictions, f)
-            
-        save_summary_fname = f"{self.save_dir}/{llm_name}-summary-{intervention_mode}.txt"
-        
-        results = self.dataset_metric.agg_to_dict()
-        
-        for k, v in args.__dict__.items():
-            results["args/%s" % k] = v
-            
-        with open(save_summary_fname, "wb") as f:
-            pickle.dump(results, f)
-            
-        self.logger.log(f"Time taken to store all results: {elapsed_from_str(time_start)}")
     
     @staticmethod
     def get_acc_log_loss(predictions):
@@ -190,52 +165,39 @@ class TaserGPTJExperiment:
                        test_logloss=test_logloss)
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description="GPTJ LLM Experiment")
     
-    # parser arguments
-    parser.add_argument('--intervention_mode',
-                    type=int, help='1. QKVO across Model \n2. QKVO 1 layer at a time \n3. QKVO (Early, Middle, Last)\
-                        \n4. FC-in-out across model\n5. FC-in-out 1 layer at a time \n6. FC-in-out (Early, middle, end)',
-                        default=1, choices=[1, 2, 3, 4, 5, 6])
+    intervention_mode = 5
+    start_rank = 54
+    end_rank = 80
+    rank_step = 2 
+    ranks = range(start_rank, end_rank, rank_step)
     
-    parser.add_argument('--home_dir', type=str, help='Home directory for saving results', default="/home/hpate061/Laser_T/results")
-    parser.add_argument('--decomposition_type', type=str, help='Decomposition type for rank reduction', default="cp", choices=["cp", "tucker"])
-    
-    args = parser.parse_args()
-    
-    
-    #layers = range(24,28)
-    #layers = [str(layer) for layer in layers]
+    layers = range(27,28)
+    layers = [str(layer) for layer in layers]
     # For all layers and early, middle, last
-    layers = []
-    layers.append("early")
-    layers.append("middle")
-    layers.append("last")
+
     
     # Decomposition type
-    decomposition_type = args.decomposition_type
+    decomposition_type = 'tucker'
     
     # Ranks 
-    start_rank = 1
+    start_rank = 30
     end_rank = 80
-    rank_step = 1
+    rank_step = 2
     ranks = range(start_rank, end_rank + 1, rank_step)
     llm_name = "GPTJ"
     
     # Logging
-    wandb.init(project="TASER", name=f"GPTJ BB QA Wikidata {args.intervention_mode}, {decomposition_type} Decomposition")
-    wandb_table = wandb.Table(columns=["Layer", "Rank", "Val Acc", "Val Logloss", "Test Acc", "Test Logloss"])
     results_df = pd.DataFrame(columns=["Layer", "Rank", "Val Acc", "Val Logloss", "Test Acc", "Test Logloss"])
     
     # Create save dir and logger 
-    home_dir = args.home_dir
-    intervention_mode = args.intervention_mode
+    home_dir = "/home/hpate061/Laser_T/results"
+    intervention_mode = 5
     save_dir = f"{home_dir}/{intervention_mode}/{llm_name}_intervention_results"
-    
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
         
-    logger = Logger(save_dir=save_dir, fname=f"{llm_name}_experiment.log")
+    logger = Logger(save_dir=save_dir, fname=f"{llm_name}-log-{intervention_mode}.txt")
     
     experiment = TaserGPTJExperiment(save_dir=save_dir, logger=logger)
     
@@ -263,13 +225,6 @@ if __name__ == '__main__':
     
     base_results_dict = base_results.to_dict()
     
-    wandb_table.add_data(-1,
-                         -1,
-                         base_results_dict["val_acc"],
-                         base_results_dict["val_logloss"],
-                         base_results_dict["test_acc"],
-                         base_results_dict["test_logloss"])
-    
     base_val_acc = base_results_dict["val_acc"]
     base_val_logloss = base_results_dict["val_logloss"]
     base_test_acc = base_results_dict["test_acc"]
@@ -291,31 +246,57 @@ if __name__ == '__main__':
     print(f"Baseline, {base_results.to_str()}")
 
     # Full model intervention
-    if intervention_mode == 1 or intervention_mode == 4: 
+    # if intervention_mode == 1 or intervention_mode == 4: 
+    #     for rank in ranks:
+    #         model.load_state_dict(original_state_dict)
+    #         model.to("cuda")
+            
+    #         predictions = experiment.intervene(model=model,
+    #                                            tokenizer=tokenizer,
+    #                                            dataset=dataset,
+    #                                            intervention_mode=intervention_mode,
+    #                                            layer=None,
+    #                                            rank=rank, decomposition_type=decomposition_type)
+            
+    #         results = experiment.validate(predictions)
+            
+    #         results_dict = results.to_dict()
+            
+    #         new_data = pd.DataFrame([{
+    #             "Layer": -1,
+    #             "Rank": rank,
+    #             "Val Acc": results_dict["val_acc"],
+    #             "Val Logloss": results_dict["val_logloss"],
+    #             "Test Acc": results_dict["test_acc"],
+    #             "Test Logloss": results_dict["test_logloss"]
+    #         }])
+            
+    #         results_df = pd.concat([results_df, new_data], ignore_index=True)
+    #         results_df.to_csv(f"/home/hpate061/Laser_T/results/TASER_GPTJ_MODE:{intervention_mode}_BBH_QA_RESULTS.csv", index=False)
+            
+    #         print(f"Rank {rank}, {results.to_str()}")
+            
+        
+    #else:
+    for layer in layers:
         for rank in ranks:
             model.load_state_dict(original_state_dict)
             model.to("cuda")
             
             predictions = experiment.intervene(model=model,
-                                               tokenizer=tokenizer,
-                                               dataset=dataset,
-                                               intervention_mode=args.intervention_mode,
-                                               layer=None,
-                                               rank=rank, decomposition_type=decomposition_type)
+                                                tokenizer=tokenizer,
+                                                dataset=dataset,
+                                                intervention_mode=intervention_mode,
+                                                layer=layer,
+                                                rank=rank, decomposition_type=decomposition_type)
             
             results = experiment.validate(predictions)
             
             results_dict = results.to_dict()
             
-            wandb_table.add_data(-1,
-                                 rank,
-                                 results_dict["val_acc"],
-                                 results_dict["val_logloss"],
-                                 results_dict["test_acc"],
-                                 results_dict["test_logloss"])
             
             new_data = pd.DataFrame([{
-                "Layer": -1,
+                "Layer": layer,
                 "Rank": rank,
                 "Val Acc": results_dict["val_acc"],
                 "Val Logloss": results_dict["val_logloss"],
@@ -324,51 +305,8 @@ if __name__ == '__main__':
             }])
             
             results_df = pd.concat([results_df, new_data], ignore_index=True)
-            results_df.to_csv(f"/home/hpate061/Laser_T/results/TASER_GPTJ_MODE:{intervention_mode}_BBH_QA_RESULTS.csv", index=False)
+            results_df.to_csv(f"/home/hpate061/Laser_T/results/TASER_GPTJ_MODE:{intervention_mode}_TUCKER_BBH_QA_RESULTS.csv", index=False)
             
-            print(f"Rank {rank}, {results.to_str()}")
-            
-        wandb.log({"intervention_results": wandb_table})
-        
-    else:
-        for layer in layers:
-            for rank in ranks:
-                model.load_state_dict(original_state_dict)
-                model.to("cuda")
-                
-                predictions = experiment.intervene(model=model,
-                                                   tokenizer=tokenizer,
-                                                   dataset=dataset,
-                                                   intervention_mode=args.intervention_mode,
-                                                   layer=layer,
-                                                   rank=rank, decomposition_type=decomposition_type)
-                
-                results = experiment.validate(predictions)
-                
-                results_dict = results.to_dict()
-                
-                wandb_table.add_data(-1,
-                                     rank,
-                                     results_dict["val_acc"],
-                                     results_dict["val_logloss"],
-                                     results_dict["test_acc"],
-                                     results_dict["test_logloss"])
-                
-                new_data = pd.DataFrame([{
-                    "Layer": -1,
-                    "Rank": rank,
-                    "Val Acc": results_dict["val_acc"],
-                    "Val Logloss": results_dict["val_logloss"],
-                    "Test Acc": results_dict["test_acc"],
-                    "Test Logloss": results_dict["test_logloss"]
-                }])
-                
-                results_df = pd.concat([results_df, new_data], ignore_index=True)
-                results_df.to_csv(f"/home/hpate061/Laser_T/results/TASER_GPTJ_MODE:{intervention_mode}_BBH_QA_RESULTS.csv", index=False)
-                
-                print(f"Layer {layer}, Rank {rank}, {results.to_str()}")
-                
-        wandb.log({"intervention_results": wandb_table})
-        wandb.finish()
-        
-        logger.log("Experiment Complete")
+            print(f"Layer {layer}, Rank {rank}, {results.to_str()}")
+    
+    logger.log("Experiment Complete")

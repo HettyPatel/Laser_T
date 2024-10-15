@@ -176,12 +176,12 @@ class TASERGPTJExperiment:
 if __name__ == '__main__':
     
     intervention_mode = 5
-    start_rank = 50
+    start_rank = 54
     end_rank = 80
     rank_step = 2 
     ranks = range(start_rank, end_rank, rank_step)
     
-    layers = range(25, 28)
+    layers = range(27, 28)
     layers = [str(layer) for layer in layers]
     
     results_df = pd.DataFrame(columns=["Layer", "Rank", "Val Acc", "Val Logloss", "Test Acc", "Test Logloss"])
@@ -227,7 +227,7 @@ if __name__ == '__main__':
                                        layer=None,
                                        rank=None,
                                        beam=1,
-                                       decomposition_type='cp')
+                                       decomposition_type='tucker')
     
     base_results = experiment.validate(predictions)
     
@@ -263,7 +263,7 @@ if __name__ == '__main__':
                                                layer=layer,
                                                rank=rank,
                                                beam=1,
-                                               decomposition_type='cp')
+                                               decomposition_type='tucker')
             
             results = experiment.validate(predictions)
             results_dict = results.to_dict()
@@ -278,7 +278,7 @@ if __name__ == '__main__':
             }])
             
             results_df = pd.concat([results_df, new_data], ignore_index=True)
-            results_df.to_csv(f"/home/hpate061/Laser_T/results/TASER_GPTJ_MODE:{intervention_mode}_Hotpot.csv", index=False)
+            results_df.to_csv(f"/home/hpate061/Laser_T/results/TASER_GPTJ_MODE:{intervention_mode}_TUCKER_Hotpot.csv", index=False)
             print(f"Layer: {layer}, Rank: {rank}, Results: {results.to_str()}")
             
     logger.log("="*50)

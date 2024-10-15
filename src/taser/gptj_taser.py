@@ -219,44 +219,27 @@ class GPTJTaser(AbstractTaser):
     
     @staticmethod
     def return_reconstructed_tensor(tensor, rank, decomposition_type):
-        """
-        return the reconstructed tensor for the given tensor with given rank and decomp_type.
-        """
+        
         tl.set_backend('pytorch')
-
-        # Clear previous CUDA memory for cuda:1
+        
         with torch.cuda.device("cuda:1"):
             torch.cuda.empty_cache()
-        
+            gc.collect()
+            
         if decomposition_type == 'cp':
             tensorly_tensor = tl.tensor(tensor, device='cuda:1')
             factors = parafac(tensorly_tensor, rank=rank, init='random')
             reconstructed_tensor = tl.kruskal_to_tensor(factors)
-        
-        
-        # Need to update to do different ranks for eeach mode if using tucker
+            
+            
         elif decomposition_type == 'tucker':
+            print("Tucker decomposition")
             tensorly_tensor = tl.tensor(tensor, device='cuda:1')
             tucker_tensor = tucker(tensorly_tensor, rank=[2, rank, rank], init='random')
             reconstructed_tensor = tl.tucker_to_tensor(tucker_tensor)
             
         else:
-            raise AssertionError(f"Unhandled decomposition type {decomposition_type}")
-        
-        
-           # Ensure GPU memory is cleared for cuda:1
-        del tensorly_tensor
-        if decomposition_type == 'cp':
-            del factors
-        else:
-            del tucker_tensor
-        
-        # Force garbage collection
-        gc.collect()
-        
-        # Clear CUDA cache for cuda:1
-        with torch.cuda.device("cuda:1"):
-            torch.cuda.empty_cache()
+            raise ValueError("Invalid decomposition type")
         
         return reconstructed_tensor
            

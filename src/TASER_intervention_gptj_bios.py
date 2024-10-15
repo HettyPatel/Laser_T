@@ -192,34 +192,9 @@ class TaserGPTJExperiment:
                 "question_answer_length": inputs.input_ids.shape[1] + 1
             }
             predictions.append(predictions_)
-            
-        self.terminate_and_save(predictions)
-        
+                    
         return predictions
     
-    def terminate_and_save(self, predictions):
-
-        self.logger.log("Saving results. Final Performance is given below:")
-        self.dataset_metric.terminate()
-        self.dataset_metric.print()
-
-        time_start = time.time()
-        # Save predictions
-        save_pred_fname = f"{self.save_dir}/bios_gptj-predictions.pkl"
-        
-        with open(save_pred_fname, 'wb') as f:
-            pickle.dump(predictions, f)
-            
-        save_summary_fname = f"{self.save_dir}/bios_gptj-summary.txt"
-        
-        results = self.dataset_metric.agg_to_dict()
-        for k, v in args.__dict__.items():
-            results["args/%s" % k] = v
-            
-        with open(save_summary_fname, 'wb') as f:
-            pickle.dump(results, f)
-            
-        self.logger.log(f"Time taken to save results: {elapsed_from_str(time_start)}")
         
     @staticmethod
     def get_acc_log_loss(predictions):
@@ -249,57 +224,37 @@ class TaserGPTJExperiment:
     
     
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description="GPTJ Bios Profession LLM Experiment")
-    
-    # parser arguments
-    parser.add_argument('--intervention_mode',
-                    type=int, help='1. QKVO across Model \n2. QKVO 1 layer at a time \n3. QKVO (Early, Middle, Last)\
-                        \n4. FC-in-out across model\n5. FC-in-out 1 layer at a time \n6. FC-in-out (Early, middle, end)',
-                        default=1, choices=[1, 2, 3, 4, 5, 6])
-    
-    
-    #should this be a list of strings so we can do all and early middle last all in the same run?
-    #maybe log a table with model, dataset, intervention_mode, layer, rank, and results ? 
-    #can extract figures from the table later as needed
-    #list of layers to intervene on    
-    parser.add_argument('--home_dir', type=str, help='Home directory for saving results', default="/home/hpate061/Laser_T/results")
-    parser.add_argument('--decomposition_type', type=str, help='Decomposition type for rank reduction', default="cp", choices=["cp", "tucker"])
-    
-    args = parser.parse_args()
+
     
     # For all layers and early, middle, last
     #layers = range(24,28)
     # = [str(layer) for layer in layers]
-    layers = []
-    layers.append("early")
-    layers.append("middle")
-    layers.append("last")
-    
     
     
     #decomposition type
-    decomposition_type = args.decomposition_type
+    decomposition_type = 'tucker'
     
     #ranks 
-    start_rank = 1
+    start_rank = 30
     end_rank = 80
-    rank_step = 1
+    rank_step = 2
     ranks = range(start_rank, end_rank + 1, rank_step)
     llm_name = "GPTJ"
+
+    layers = range(24,28)
+    layers = [str(layer) for layer in layers]
     
     #==========================================================================================================#
     # <-------------------------------------------- LOGGING -------------------------------------------->
     #==========================================================================================================#
     # Wandb init
-    wandb.init(project="TASER", name=f"GPTJ BIOS {args.intervention_mode}, {decomposition_type} Decomposition")
-    wandb_table = wandb.Table(columns=["Layer", "Rank", "Val Acc", "Val Logloss", "Test Acc", "Test Logloss"])
     #dataframe to also save results
     results_df = pd.DataFrame(columns=["Layer", "Rank", "Val Acc", "Val Logloss", "Test Acc", "Test Logloss"])
     
     # CREATE SAVE DIR AND LOGGER 
     
-    home_dir = args.home_dir
-    intervention_mode = args.intervention_mode
+    home_dir = "/home/hpate061/Laser_T/results"
+    intervention_mode = 5
     save_dir = f"{home_dir}/{intervention_mode}/{llm_name}_BIOS_intervention_results"
     
     if not os.path.exists(save_dir):
@@ -342,13 +297,6 @@ if __name__ == '__main__':
     
     base_results_dict = base_results.to_dict()
     
-    wandb_table.add_data(-1,
-                         -1,
-                         base_results_dict["val_acc"],
-                         base_results_dict["val_logloss"],
-                         base_results_dict["test_acc"],
-                         base_results_dict["test_logloss"])
-    
     base_val_acc = base_results_dict["val_acc"]
     base_val_logloss = base_results_dict["val_logloss"]
     base_test_acc = base_results_dict["test_acc"]
@@ -389,7 +337,7 @@ if __name__ == '__main__':
             predictions = experiment.intervene(model=model,
                                                 tokenizer=tokenizer,
                                                 dataset=dataset,
-                                                intervention_mode=args.intervention_mode,
+                                                intervention_mode=intervention_mode,
                                                 layer=None,
                                                 rank=rank, decomposition_type=decomposition_type)
             
@@ -397,12 +345,6 @@ if __name__ == '__main__':
             
             results_dict = results.to_dict()
             
-            wandb_table.add_data(-1,
-                                    rank,
-                                    results_dict["val_acc"],
-                                    results_dict["val_logloss"],
-                                    results_dict["test_acc"],
-                                    results_dict["test_logloss"])
         
             try:
                 results_df
@@ -421,11 +363,10 @@ if __name__ == '__main__':
             
             # Concatenate the new data to the results DataFrame
             results_df = pd.concat([results_df, new_data], ignore_index=True)
-            results_df.to_csv(f"/home/hpate061/Laser_T/results/TASER_GPTJ_MODE:{intervention_mode}_BIOS_PROF_RESULTS.csv", index=False)
+            results_df.to_csv(f"/home/hpate061/Laser_T/results/TASER_GPTJ_MODE:{intervention_mode}_TUCKER_BIOS_PROF_RESULTS.csv", index=False)
             
             print(f"Rank {rank}, {results.to_str()}")
             
-        wandb.log({"intervention_results": wandb_table})
         
     else:
         
@@ -442,7 +383,7 @@ if __name__ == '__main__':
                 predictions = experiment.intervene(model=model,
                                                     tokenizer=tokenizer,
                                                     dataset=dataset,
-                                                    intervention_mode=args.intervention_mode,
+                                                    intervention_mode=intervention_mode,
                                                     layer=layer,
                                                     rank=rank, decomposition_type=decomposition_type)
                 
@@ -450,12 +391,6 @@ if __name__ == '__main__':
                 
                 results_dict = results.to_dict()
                 
-                wandb_table.add_data(-1,
-                                    rank,
-                                    results_dict["val_acc"],
-                                    results_dict["val_logloss"],
-                                    results_dict["test_acc"],
-                                    results_dict["test_logloss"])
                 
                 try:
                     results_df
@@ -464,7 +399,7 @@ if __name__ == '__main__':
                     
                 # Create a DataFrame with the new results
                 new_data = pd.DataFrame([{
-                    "Layer": -1,
+                    "Layer": layer,
                     "Rank": rank,
                     "Val Acc": results_dict["val_acc"],
                     "Val Logloss": results_dict["val_logloss"],
@@ -477,12 +412,10 @@ if __name__ == '__main__':
                 
                 # Save the results to a CSV file
                 
-                results_df.to_csv(f"/home/hpate061/Laser_T/results/TASER_GPTJ_MODE:{intervention_mode}_BIOS_PROF_RESULTS.csv", index=False)
+                results_df.to_csv(f"/home/hpate061/Laser_T/results/TASER_GPTJ_MODE:{intervention_mode}_TUCKER_BIOS_PROF_RESULTS.csv", index=False)
                 
                 print(f"Layer {layer}, Rank {rank}, {results.to_str()}")
                 
-        wandb.log({"intervention_results": wandb_table})
-        wandb.finish()
         
         logger.log("Experiment Complete")
     
